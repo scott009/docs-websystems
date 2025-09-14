@@ -1,0 +1,7 @@
+# Ignore everything by default
+/*
+
+# Track only these items
+!/Documentation/
+!.gitignore
+!README.md

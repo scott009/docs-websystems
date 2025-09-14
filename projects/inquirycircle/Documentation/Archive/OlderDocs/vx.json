@@ -1,0 +1,87 @@
+{
+    "created_time": "2025-08-29T15:12:47Z",
+    "files": [
+        {
+            "attachment_folder": "",
+            "created_time": "2025-08-29T15:12:47Z",
+            "id": "47",
+            "modified_time": "2025-08-29T15:12:47Z",
+            "name": "CoversationRecord 1.txt",
+            "signature": "4435611271788872559",
+            "tags": [
+            ]
+        },
+        {
+            "attachment_folder": "",
+            "created_time": "2025-08-29T15:12:47Z",
+            "id": "56",
+            "modified_time": "2025-08-29T15:12:47Z",
+            "name": "InquiryCircle1.0.Blackboard.md",
+            "signature": "1475673296336962415",
+            "tags": [
+            ]
+        },
+        {
+            "attachment_folder": "",
+            "created_time": "2025-08-29T15:12:47Z",
+            "id": "59",
+            "modified_time": "2025-08-29T15:12:47Z",
+            "name": "InquiryCircle1.1.Blackboard.md",
+            "signature": "7444533774453425007",
+            "tags": [
+            ]
+        },
+        {
+            "attachment_folder": "",
+            "created_time": "2025-08-29T15:12:47Z",
+            "id": "62",
+            "modified_time": "2025-08-29T15:12:47Z",
+            "name": "neo4j.md",
+            "signature": "5433571893954331503",
+            "tags": [
+            ]
+        },
+        {
+            "attachment_folder": "",
+            "created_time": "2025-08-29T15:12:47Z",
+            "id": "65",
+            "modified_time": "2025-08-29T15:12:47Z",
+            "name": "README.md",
+            "signature": "12231560960861651823",
+            "tags": [
+            ]
+        },
+        {
+            "attachment_folder": "",
+            "created_time": "2025-08-29T15:12:47Z",
+            "id": "68",
+            "modified_time": "2025-08-29T15:12:47Z",
+            "name": "readme1.0.md",
+            "signature": "8075444232349926255",
+            "tags": [
+            ]
+        },
+        {
+            "attachment_folder": "",
+            "created_time": "2025-08-29T15:12:47Z",
+            "id": "71",
+            "modified_time": "2025-08-29T15:12:47Z",
+            "name": "skillsdoc.md",
+            "signature": "7365441414826673007",
+            "tags": [
+            ]
+        }
+    ],
+    "folders": [
+        {
+            "name": "Archive"
+        },
+        {
+            "name": "db"
+        }
+    ],
+    "id": "70",
+    "modified_time": "2025-08-29T15:12:47Z",
+    "signature": "13240274076602319727",
+    "version": 3
+}
