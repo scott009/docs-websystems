@@ -31,6 +31,15 @@ Define the environments and system layout for InquiryCircle. This document captu
 - Static assets: `/srv/inquirycircle/caddy/site/dist`.  
 - Persistent data: `/var/lib/inquirycircle`.
 
+### DOCS-ENV (Documentation Management Environment)
+- **Platform**: Windows 10/11 native filesystem  
+- **Access Path**: `/mnt/c/Users/scott/Documents/AIProjects/Markdown/docs-websystems/projects/inquirycircle/`
+- **Purpose**: Cross-project documentation templates and AI context management
+- **Tools**: Windows file explorer, VNote, text editors, git for Windows
+- **Integration**: Accessible from WSL via mount, serves AI model context loading
+- **Repository**: Version controlled via GitHub at docs-websystems
+- **Workflow**: Edit docs in VNote, commit changes, AI loads context for model switching
+
 ---
 
 ## DNS
