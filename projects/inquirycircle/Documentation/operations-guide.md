@@ -43,7 +43,7 @@ For new sessions, use the AI Context Loading Protocol above first.
 When deploying changes:
 1. **Pre-deployment verification**:
    ```bash
-   curl http://localhost:8080/api/health/     # Verify local health
+   curl https://localhost/api/health/ -k      # Verify local health
    docker-compose ps                          # Check container status  
    git status                                 # Verify clean working tree
    ```
@@ -178,10 +178,13 @@ docker-compose logs --tail=50 [service]   # View recent logs
 **Model Hint: Claude Haiku** ✨ *Simple verification commands with predictable outputs*
 
 ```bash
+# Quick Health Verification (Single Command)
+curl https://localhost/api/health/ -k && echo " ✅ Local OK" || echo " ❌ Local Failed"
+curl https://catbench.com/api/health/ && echo " ✅ Prod OK" || echo " ❌ Prod Failed"
+
 # Local Development Health Checks
-curl http://localhost:8080/api/health/     # Full stack through Caddy
-curl http://localhost:8000/api/health/     # Backend direct
-curl http://localhost:5173                 # Frontend dev server
+curl https://localhost/api/health/ -k      # Full stack through Caddy (HTTPS)
+curl http://localhost/api/health/          # Full stack through Caddy (HTTP)
 docker-compose ps | grep -v Exit           # Check all services running
 
 # Production Health Checks
