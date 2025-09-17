@@ -94,6 +94,68 @@ The AI should check STATUS.md for:
 - **Known issues** - existing problems to be aware of  
 - **Test keys** - current authentication credentials
 - **Next tasks** - what needs to be accomplished
+-
+
+### AI Documentation Commit Protocol (docs-env)
+  **Model Hint: Claude Haiku** ✨ *Simple documentation maintenance tasks*
+  When working in the docs-env environment to commit documentation changes:
+
+#### Environment Verification
+  ```bash
+  # Verify current location
+  pwd
+  # Expected: /mnt/c/Users/scott/Documents/AIProjects/Markdown/docs-websystems/projects/inquirycircle
+
+  Standard Documentation Commit Process
+
+  1. Navigate to docs-env directory:
+  cd /mnt/c/Users/scott/Documents/AIProjects/Markdown/docs-websystems/projects/inquirycircle
+
+  2. Check git status:
+  git status
+
+  3. Add documentation files:
+  # For STATUS.md updates
+  git add Documentation/STATUS.md
+
+  # For other documentation files:
+  git add Documentation/[filename].md
+
+  4. Commit with standard format:
+  git commit -m "$(cat <<'EOF'
+  [Brief description of changes]
+
+  - [Bullet point 1 describing change]
+  - [Bullet point 2 describing change]
+  - [Additional bullet points as needed]
+
+  🤖 Generated with [Claude Code](https://claude.ai/code)
+
+  Co-Authored-By: Claude <noreply@anthropic.com>
+  EOF
+  )"
+
+  5. Push to repository:
+  git push origin main
+
+  Common Documentation Files
+
+  - Documentation/STATUS.md - Project status and progress
+  - Documentation/project-spec.md - Architecture and constraints
+  - Documentation/operations-guide.md - Procedures and workflows
+  - Documentation/infrastructure.md - Environment setup
+  - Documentation/CHANGELOG.md - Documentation evolution
+
+  Sample Commit Messages
+  - "Update STATUS.md for Stage X.X.X: [brief feature description]"
+  - "Add new documentation for [feature/component name]"
+  - "Revise project specifications for [specific change]"
+  - "Update operations guide with [new procedure/protocol]"
+  Error Handling
+  - If git commands fail, verify location with pwd
+  - Use ls Documentation/ to confirm files exist
+  - Check git repository status if push fails
+
 
 ---
 
