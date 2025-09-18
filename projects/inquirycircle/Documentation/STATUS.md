@@ -97,7 +97,7 @@
   ### Stage 2.2.x Continuation
   - Enhanced HTML document features
   - Multiple document management
-  - Advanced styling capabilities
+  - Ensure Stylesheet use
 
 ### Stage 3 Planning (Future)
 - PostgreSQL migration from SQLite

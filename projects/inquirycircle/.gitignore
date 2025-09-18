@@ -5,3 +5,6 @@
 !/Documentation/
 !.gitignore
 !README.md
+
+# Ignore vx.json files
+**/vx.json
