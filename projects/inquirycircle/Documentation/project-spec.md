@@ -1,5 +1,5 @@
 
-<!-- InquiryCircle2 – ProjectSpec – Stage2 – 9/12/2025 at 8:15 AM ET -->
+<!-- InquiryCircle2 – ProjectSpec – Stage2 – 9/19/2025 at 2:15 PM ET -->
 
 # Project Specification
 
@@ -72,6 +72,77 @@ Internet → Caddy
 ↳ integrates with external Jitsi
 ↳ persists data in SQLite
 
+---
+
+## Display Component Architecture
+
+### Architectural Model
+InquiryCircle uses a **hierarchical component composition** where routes present user experiences through composable display elements.
+
+**Three-Layer Structure**:
+- **Route Level**: URL paths that define user experiences (`/test-jitsi`, `/facilitator-dashboard`)
+- **Display Component Level**: Vue components that orchestrate multiple display elements
+- **Display Element Level**: Individual content panels that can be reused across displays
+
+### Display Elements (Composable)
+**Core Elements**:
+- **htmlwin1**: Primary HTML document panel
+- **htmlwin2**: Secondary HTML document panel
+- **pdfviewer**: PDF document panel (legacy, being phased out in Stage 2.2.2)
+- **jitsi-video**: Video conferencing interface
+- **facilitator-controls**: Administrative interface elements
+- **participant-chat**: Messaging and communication panels
+
+### Display Element Capabilities (Optional)
+Each display element may support different capabilities as needed:
+
+**Content Sources**:
+- Static HTML files served through Caddy
+- Vue template rendering with dynamic data
+- API-driven content from Django backend
+- External service integration
+
+**Navigation Methods**:
+- Independent scroll state per user
+- Synchronized navigation across participants
+- Section jumping and bookmarks
+- Facilitator-controlled content selection
+
+**Layout Behaviors**:
+- Fixed positioning within display component
+- Resizable panels with saved preferences
+- Show/hide state management
+- Responsive breakpoint handling
+
+**User Permissions**:
+- Facilitator-only controls (content selection, navigation sync)
+- Participant access levels (view-only, limited interaction)
+- Role-based feature availability
+
+### Composition Patterns
+**Current Implementations**:
+- **test-jitsi route**: Composes `jitsi-video` + `htmlwin1` + `htmlwin2`
+- **Future routes**: May use different combinations of available elements
+
+**Composition Rules**:
+- Display elements maintain independent state unless explicitly synchronized
+- Each route defines which elements are included and how they're arranged
+- Elements can be reused across different route/display combinations
+- New routes can be created by composing existing elements in new ways
+
+### Implementation Strategy
+**Stage 2.2.2 Focus**:
+- Replace `pdfviewer` with enhanced `htmlwin1`/`htmlwin2` implementation
+- Add local stylesheet support to HTML display elements
+- Maintain existing composition patterns while improving individual element capabilities
+
+**Future Enhancement Path**:
+- Add new display elements without changing existing routes
+- Create new route experiences by composing elements differently
+- Enhance individual element capabilities (static → dynamic content)
+- Maintain backward compatibility through capability-based design
+
+---
 
 ## Documentation Standards
 
@@ -108,4 +179,4 @@ Older versions must be marked explicitly, e.g.:
 **Related Documentation**:  
 [operations-guide](./operations-guide.md) | [infrastructure](./infrastructure.md) | [README](./README.md) | [CHANGELOG](./CHANGELOG.md)
 
-**Document Version**: v2.1.0 | **Last Updated**: 9/12/2025 | **Status**: ✅ Current
+**Document Version**: v2.2.0 | **Last Updated**: 9/19/2025 | **Status**: ✅ Current
