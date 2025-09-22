@@ -1,0 +1,39 @@
+
+General Discussion
+
+-------------------------
+I would like to create a set of reactions
+each reaction is represented by a visible button in the interface. (A DISPLAY COMPONANT) 
+the button sits outside the iframe itself
+
+-------------------------------------
+
+
+Each reaction also has a user selectable modifier: 
+REACTION MODIFIERS
+Anonymous reactions - The speaker sees the reaction but does not see who its from
+Accredited reactions - the speaker sees the reaction and who sent it  
+Secret reactions - only the facilitatior sees the reactions 
+=========================
+
+REACTIONS
+like
+love
+dislike
+hate
+agree
+disagree
+go on
+hurry up
+boring
+intereseting 
+sympathy
+laugh
+
+--------------------------
+create a unit testing so each reaction object can be tested outside of the interface
+
+-----------------------------------------
+use interfaces to prepare for a later versions use of a standalone jitsi server. 
+
+
