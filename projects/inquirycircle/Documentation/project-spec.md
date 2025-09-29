@@ -85,19 +85,62 @@ InquiryCircle uses a **hierarchical component composition** where routes present
 - **Display Element Level**: Individual content panels that can be reused across displays
 
 ### Display Elements (Composable)
-**Verified Elements from test-video-integration route**:
-- **TopMenu1**: Top navigation bar with InquiryCircle branding and menu items
-- **TitleBlock**: Route-specific title and description section
-- **JitsiWin1**: Primary video conferencing interface (Jitsi Meet integration)
-- **StatusWin1**: Right sidebar with status information and controls
-- **Bar1**: Notification/status bar for system messages
-- **Widget1**: Left control widget (mirrors Widget2 placement)
-- **Widget2**: Right control widget (mirrors Widget1 placement)
-- **ContentPanel1**: Left content area (table of contents, navigation)
-- **ContentPanel2**: Right content area (document text, rich content)
 
-**Legacy Elements (being phased out)**:
-- **pdfviewer**: PDF document panel (replaced by ContentPanel implementation)
+**Architecture Verified from /meeting Route Analysis**:
+
+The InquiryCircle meeting interface demonstrates a hierarchical composition where visual elements map directly to both frontend components and backend domain logic. The `/meeting` route provides the canonical example of display element integration.
+
+**Element Mapping Table**:
+| Label | ID | Parent | Class | File |
+|-------|----|---------|---------|----|
+| Navigation Menu | navmenu1 | topbar | NF | NF |
+| User Name | username | topbar | NF | NF |
+| User Role | userrole | topbar | NF | NF |
+| Logout/login | logout1 | topbar | NF | NF |
+| participant 2 | part2 | jitsiwin1 | NF | NF |
+| participant's perspective | partpersp | jitsiwin1 | NF | NF |
+| Speaker | speaker1 | jitsiwin1 | NF | NF |
+| participant1 | part1 | jitsiwin1 | NF | NF |
+| participant 3 | part3 | jitsiwin1 | NF | NF |
+| Facilitator | facil1 | jitsiwin1 | NF | NF |
+| jitsiwin1 | jitsi1 | mainarea | NF | NF |
+| ContentPanel1 | content1 | mainarea | NF | NF |
+| Like | like1 | reaction1 | LikeReaction | reactions.py |
+| Love | love1 | reaction1 | LoveReaction | reactions.py |
+| Dislike | dislike1 | reaction1 | DislikeReaction | reactions.py |
+| Hate | hate1 | reaction1 | HateReaction | reactions.py |
+| Agree | agree1 | reaction1 | AgreeReaction | reactions.py |
+| Disagree | disagree1 | reaction1 | DisagreeReaction | reactions.py |
+| Hurry Up | hurryup1 | reaction1 | HurryUpReaction | reactions.py |
+| Go on | goon1 | reaction1 | GoOnReaction | reactions.py |
+| Interesting | interest1 | reaction1 | InterestingReaction | reactions.py |
+| Boring | boring1 | reaction1 | BoringReaction | reactions.py |
+| Sympathy | sympathy1 | reaction1 | SympathyReaction | reactions.py |
+| Laugh | laugh1 | reaction1 | LaughReaction | reactions.py |
+| 2 x Hurry Up | hurryct1 | reactionbx1 | NF | NF |
+| reactionbox1 | reactionbx1 | bottombar | NF | NF |
+| mbox1 | mbox1 | bottombar | NF | NF |
+
+**Core Display Areas**:
+- **topbar**: Navigation and user identity elements
+- **mainarea**: Primary content (video conference + content panel)
+- **jitsiwin1**: Video conference interface with participant tiles
+- **reaction1**: Reaction button interface mapped to domain classes
+- **bottombar**: Status and reaction aggregation displays
+
+**Frontend-Backend Integration**:
+- **UI Elements** (navmenu1, username, etc.): Vue components for interface
+- **Reaction Elements** (like1, love1, etc.): Direct mapping to Python domain classes
+- **Container Elements** (topbar, mainarea, etc.): Layout composition structures
+- **Content Elements** (content1, reactionbx1): Dynamic content areas
+
+**Reaction System Architecture**:
+The reaction elements demonstrate clean separation between presentation and domain logic:
+- Each reaction button maps to a concrete class in `reactions.py`
+- WebSocket communication handled by `consumers.py`
+- Policy validation through `policy_impl.py`
+- Real-time broadcasting via `broadcast_channels.py`
+- Participant context from `directory_cache.py`
 
 ### Display Element Capabilities (Optional)
 Each display element may support different capabilities as needed:
