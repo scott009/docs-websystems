@@ -115,11 +115,21 @@
   6. ✅ **HTML Integration**: Pure HTML content display in both content panels
   7. ✅ **Docker Deployment**: Successfully deployed changes to both dev and container environments
 
-  ### Stage 2.2.3+ Planning (Future Enhancements)
-  - **Dynamic Content Selection**: Facilitator-controlled HTML document switching
-  - **Enhanced HTML Features**: Interactive navigation, bookmark support
-  - **Multi-Route Implementation**: Apply display element architecture to other routes
-  - **Responsive Optimization**: Mobile and tablet layout adaptations
+
+### Stage 2.3.0 - Route Restructure (✅ Completed - 9/30/2025)
+
+#### New Routes
+  - **`/meeting`**: Standard meeting interface with video conferencing and content panels
+  - **`/facmeet`**: Facilitator's meeting interface will have some extra features
+  - **`/administration`**: for creation and mangement of facilitators and Circles
+  - **`/tests`**: System health checks and component testing
+  - **`/facpanel`**: Facilitator control panel with navigation to /facmeet
+#### Routes Removed
+  - **`/dashboard`**: Merged into /administration
+  - **`/circles`**: Merged into /administration
+  - **`/test-video-integration`**: Renamed to /meeting
+  
+  
 
 ### Stage 3 Planning (Future)
 - PostgreSQL migration from SQLite
