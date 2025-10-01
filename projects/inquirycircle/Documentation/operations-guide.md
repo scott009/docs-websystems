@@ -91,47 +91,66 @@ When encountering errors:
 The AI should check STATUS.md for:
 - **Current project version/phase** - determines active procedures
 - **Recent changes** - what was last modified or deployed
-- **Known issues** - existing problems to be aware of  
+- **Known issues** - existing problems to be aware of
 - **Test keys** - current authentication credentials
 - **Next tasks** - what needs to be accomplished
--
+
+### AI Frontend Change Deployment Protocol
+**Model Hint: Claude Sonnet 4** 🧠 *Frontend changes require containerized build workflow*
+
+**Critical Understanding**: The frontend is containerized and served through Docker/nginx. Vue component changes do NOT appear in the browser until the Docker container is rebuilt.
+
+**Required Steps for ANY Frontend Change**:
+1. **Build the Vue frontend locally**:
+   ```bash
+   cd /home/scott/inquirycircle/frontend && npm run build
+   ```
+
+2. **Rebuild the frontend Docker container**:
+   ```bash
+   cd /home/scott/inquirycircle/compose
+   docker-compose -f docker-compose.dev.yml up -d --build frontend
+   ```
+
+3. **Verify deployment**:
+   ```bash
+   # Check new build files exist
+   docker exec ic-frontend ls -la /usr/share/nginx/html/assets/
+
+   # Verify component is in bundle (replace ComponentName)
+   docker exec ic-frontend grep -o "ComponentName" /usr/share/nginx/html/assets/[bundle-name].js
+   ```
+
+**When to Use This Protocol**:
+- Creating new Vue components
+- Editing existing Vue components
+- Changing styles in Vue files
+- Modifying Vue templates
+- Any change to `/home/scott/inquirycircle/frontend/src/`
+
+**User Instruction**: After deployment, user must hard refresh browser (Ctrl+Shift+R or Cmd+Shift+R) to bypass cache.
+
+**Common Mistake**: Running only `npm run build` without rebuilding the container. The container serves files from its internal `/usr/share/nginx/html/` directory, not from the local `dist/` folder.
 
 ### AI Documentation Commit Protocol (docs-env)
   **Model Hint: Claude Haiku** ✨ *Simple documentation maintenance tasks*
   When working in the docs-env environment to commit documentation changes:
 
 #### Environment Verification
-  ```bash
-  # Verify current location
-  pwd
-  # Expected: /mnt/c/Users/scott/Documents/AIProjects/Markdown/docs-websystems/projects/inquirycircle
-
-  Standard Documentation Commit Process
+We are now working in the DOCS-ENV environment  
+The Remote repo when working in the DOCS-ENV environment is     https://github.com/scott009/docs-websystems
 
   1. Navigate to docs-env directory:
   cd /mnt/c/Users/scott/Documents/AIProjects/Markdown/docs-websystems/projects/inquirycircle
-
-  2. Check git status:
-  git status
-
-  3. Add documentation files:
-  # For STATUS.md updates
+  2. Check git status:    git status
+  3. Add documentation files:   # For STATUS.md updates
   git add Documentation/STATUS.md
 
   # For other documentation files:
   git add Documentation/[filename].md
-
   4. Commit with standard format:
   git commit -m "$(cat <<'EOF'
   [Brief description of changes]
-
-  - [Bullet point 1 describing change]
-  - [Bullet point 2 describing change]
-  - [Additional bullet points as needed]
-
-  🤖 Generated with [Claude Code](https://claude.ai/code)
-
-  Co-Authored-By: Claude <noreply@anthropic.com>
   EOF
   )"
 
@@ -214,6 +233,50 @@ docker system prune -f                     # Clean up unused resources
 docker images                              # List images
 docker volume ls                           # List volumes
 ```
+
+### Frontend Development Workflow
+**Required for ALL Frontend Changes**
+
+The frontend is containerized and served through Docker/nginx. Changes to Vue components require a complete build-and-deploy cycle to appear in the browser.
+
+**Standard Workflow**:
+```bash
+# 1. Build the Vue frontend
+cd /home/scott/inquirycircle/frontend
+npm run build
+
+# 2. Rebuild and restart the frontend container
+cd /home/scott/inquirycircle/compose
+docker-compose -f docker-compose.dev.yml up -d --build frontend
+
+# 3. Verify deployment
+docker exec ic-frontend ls -la /usr/share/nginx/html/assets/  # Check timestamps
+docker-compose -f docker-compose.dev.yml ps                   # Verify container running
+
+# 4. Clear browser cache and hard refresh
+# Ctrl+Shift+R (Windows/Linux) or Cmd+Shift+R (Mac)
+```
+
+**When to Use This Workflow**:
+- Creating new Vue components
+- Editing existing Vue components
+- Changing styles in `.vue` files
+- Modifying Vue templates
+- Any change to `/home/scott/inquirycircle/frontend/src/`
+
+**Verification Tips**:
+```bash
+# Check if specific component is in bundle
+docker exec ic-frontend grep -o "ComponentName" /usr/share/nginx/html/assets/VideoTestDemo-*.js
+
+# View frontend container logs
+docker-compose -f docker-compose.dev.yml logs --tail=20 frontend
+```
+
+**Common Pitfalls**:
+- ❌ Running only `npm run build` → changes won't appear (container not updated)
+- ❌ Skipping browser cache clear → old version still visible
+- ❌ Checking too quickly → container may still be starting (wait 5-10 seconds)
 
 ### Production Environment Commands  
 **Model Hint: Claude Sonnet 4** 🧠 *Production deployment requires careful evaluation and rollback readiness*
