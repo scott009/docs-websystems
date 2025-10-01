@@ -93,18 +93,23 @@ The InquiryCircle meeting interface demonstrates a hierarchical composition wher
 **Element Mapping Table**:
 | Label | ID | Parent | Class | File |
 |-------|----|---------|---------|----|
-| Navigation Menu | navmenu1 | topbar | NF | NF |
-| User Name | username | topbar | NF | NF |
-| User Role | userrole | topbar | NF | NF |
-| Logout/login | logout1 | topbar | NF | NF |
-| participant 2 | part2 | jitsiwin1 | NF | NF |
-| participant's perspective | partpersp | jitsiwin1 | NF | NF |
-| Speaker | speaker1 | jitsiwin1 | NF | NF |
-| participant1 | part1 | jitsiwin1 | NF | NF |
-| participant 3 | part3 | jitsiwin1 | NF | NF |
-| Facilitator | facil1 | jitsiwin1 | NF | NF |
-| jitsiwin1 | jitsi1 | mainarea | NF | NF |
-| ContentPanel1 | content1 | mainarea | NF | NF |
+| topbar | topbar1 | NA | NA | NA |
+| reactionbar | reaction1 | NA | NA | NA |
+| reactionbar2 | reaction2 | NA | NA | NA |
+| Navigation Menu | navmenu1 | topbar1 | NA | NA |
+| StatusBar | statbar1 | topbar1 | NA | NA |
+| User Name | username | statbar1 | NA | NA |
+| User Role | userrole | statbar1 | NA | NA |
+| CircleName | circname | statbar1 | NA | NA |
+| Logout/login | logout1 | navmenu1 | NA | NA |
+| participant 2 | part2 | jitsiwin1 | NA | NA |
+| participant's perspective | partpersp | jitsiwin1 | NA | NA |
+| Speaker | speaker1 | jitsiwin1 | NA | NA |
+| participant1 | part1 | jitsiwin1 | NA | NA |
+| participant 3 | part3 | jitsiwin1 | NA | NA |
+| Facilitator | facil1 | jitsiwin1 | NA | NA |
+| jitsiwin1 | jitsi1 | mainarea | NA | NA |
+| ContentPanel1 | content1 | mainarea | NA | NA |
 | Like | like1 | reaction1 | LikeReaction | reactions.py |
 | Love | love1 | reaction1 | LoveReaction | reactions.py |
 | Dislike | dislike1 | reaction1 | DislikeReaction | reactions.py |
@@ -117,9 +122,24 @@ The InquiryCircle meeting interface demonstrates a hierarchical composition wher
 | Boring | boring1 | reaction1 | BoringReaction | reactions.py |
 | Sympathy | sympathy1 | reaction1 | SympathyReaction | reactions.py |
 | Laugh | laugh1 | reaction1 | LaughReaction | reactions.py |
-| 2 x Hurry Up | hurryct1 | reactionbx1 | NF | NF |
-| reactionbox1 | reactionbx1 | bottombar | NF | NF |
-| mbox1 | mbox1 | bottombar | NF | NF |
+| Like | like_l1 | reaction2 | NA | NA |
+| Love | love_l1 | reaction2 | NA | NA |
+| Dislike | dislike_l1 | reaction2 | NA | NA |
+| Hate | hate_l1 | reaction2 | NA | NA |
+| Agree | agreel1 | reaction2 | NA | NA |
+| Disagree | disagree_l1 | reaction2 | NA | NA |
+| Hurry Up | hurryup_l1 | reaction2 | NA | NA |
+| Go on | goon_l1 | reaction2 | NA | NA |
+| Interesting | interest_l1 | reaction2 | NA | NA |
+| Boring | boring_l1 | reaction2 | NA | NA |
+| Sympathy | sympathy_l1 | reaction2 | NA | NA |
+| Laugh | laugh_l1 | reaction2 | NA | NA |
+| roptionPublic | ropt1 | reaction1 | NF | NF |
+| roptionAnon | ropt2 | reaction1 | NF | NF |
+| roptionSecret | ropt3 | reaction1 | NF | NF |
+| rchoicePublic | rch1 | reaction2 | NF | NF |
+| rchoiceAnon | rch2 | reaction2 | NF | NF |
+| rchoiceSecret | rch3 | reaction2 | NF | NF |
 
 **Core Display Areas**:
 - **topbar**: Navigation and user identity elements
