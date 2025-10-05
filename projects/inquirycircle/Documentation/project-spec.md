@@ -1,5 +1,5 @@
 
-<!-- InquiryCircle2 – ProjectSpec – Stage2 – 9/20/2025 at 12:45 PM ET -->
+<!-- InquiryCircle2 – ProjectSpec – Stage2 – 10/4/2025 at 3:30 PM ET -->
 
 # Project Specification
 
@@ -18,14 +18,36 @@ Deliver a working full-stack InquiryCircle system with progressive feature enhan
 - **Containers**: Docker Compose for dev/prod parity (WSL ↔ VPS)
 - **Outcome**: Minimal viable system deployed and operational on VPS
 
-### Stage 2.2 (🔄 Planning)
+### Stage 2.2 (✅ Complete)
 - **PDF Viewer Component**: Scrolling document panel alongside video interface
 - **Multi-User PDF Display**: Same document visible to facilitator and participants
 - **Independent Navigation**: Each user can scroll through PDF independently
 - **Panel Integration**: Non-overlay layout preserving video functionality
 - **Micro-versions**:
   - 2.2.1: Multiple PDF files with facilitator selection
-  - 2.2.x: Additional document enhancements
+  - 2.2.2: HTML Window Components architecture
+
+### Stage 2.3 (✅ Complete)
+- **Route Restructure**: New route organization for meeting and administration
+  - `/meeting`: Standard participant meeting interface
+  - `/facmeet`: Facilitator meeting interface with enhanced controls
+  - `/administration`: Circle and facilitator management
+  - `/tests`: System health checks and component testing
+  - `/facpanel`: Facilitator control panel
+- **TopBar Component**: Global navigation with NavMenu1 and StatusBar1
+- **Simplified Jitsi**: Direct public Jitsi embed (development configuration)
+- **Reaction Bars**: Interactive reaction system for participants and facilitators
+
+### Stage 2.3.4 (✅ Complete)
+- **DescBar1 Component**: Element description display system
+  - Positioned below reaction bars, always visible
+  - Displays element label, ID, and functional description
+  - Interactive: Updates on click of included UI elements
+  - Covers 30 interactive elements (reactions, options, labels)
+  - Visual styling: Light buff background, black border
+  - Height matches reaction bar, approximately 1/3 screen width
+  - JSON-based element descriptions in `/frontend/public/data/element-descriptions.json`
+  - Development/exploration tool for system examination
 
 ### Stage 2.x Deferred
 - Self-hosted Jitsi, PostgreSQL migration, advanced analytics, multi-tenant support
@@ -96,6 +118,7 @@ The InquiryCircle meeting interface demonstrates a hierarchical composition wher
 | topbar | topbar1 | NA | NA | NA |
 | reactionbar | reaction1 | NA | NA | NA |
 | reactionbar2 | reaction2 | NA | NA | NA |
+| DescriptionBar | descbar1 | NA | DescBar1.vue | DescBar1.vue |
 | Navigation Menu | navmenu1 | topbar1 | NA | NA |
 | StatusBar | statbar1 | topbar1 | NA | NA |
 | User Name | username | statbar1 | NA | NA |
@@ -146,6 +169,7 @@ The InquiryCircle meeting interface demonstrates a hierarchical composition wher
 - **mainarea**: Primary content (video conference + content panel)
 - **jitsiwin1**: Video conference interface with participant tiles
 - **reaction1**: Reaction button interface mapped to domain classes
+- **descbar1**: Element description panel for UI exploration and documentation
 - **bottombar**: Status and reaction aggregation displays
 
 **Frontend-Backend Integration**:
@@ -161,6 +185,18 @@ The reaction elements demonstrate clean separation between presentation and doma
 - Policy validation through `policy_impl.py`
 - Real-time broadcasting via `broadcast_channels.py`
 - Participant context from `directory_cache.py`
+
+**DescBar1 Architecture**:
+The element description system provides interactive documentation for UI elements:
+- **Interactive Elements** (30 total):
+  - Reaction buttons (24): like1, love1, dislike1, hate1, agree1, disagree1, hurryup1, goon1, interest1, boring1, sympathy1, laugh1 (reaction1) + label equivalents (reaction2)
+  - Reaction options (6): ropt1, ropt2, ropt3, rch1, rch2, rch3
+- **Excluded Elements**: TopBar components, non-clickable containers
+- **Data Source**: JSON file at `/frontend/public/data/element-descriptions.json`
+- **Display Format**: Element header (label + ID) + functional description
+- **Update Trigger**: Click event on any included element
+- **Visibility**: Currently visible to all users (future: per-circle admin control)
+- **Use Cases**: Developer exploration, system documentation, user training, facilitator reference
 
 ### Display Element Capabilities (Optional)
 Each display element may support different capabilities as needed:
@@ -274,4 +310,4 @@ Older versions must be marked explicitly, e.g.:
 **Related Documentation**:  
 [operations-guide](./operations-guide.md) | [infrastructure](./infrastructure.md) | [README](./README.md) | [CHANGELOG](./CHANGELOG.md)
 
-**Document Version**: v2.2.0 | **Last Updated**: 9/19/2025 | **Status**: ✅ Current
+**Document Version**: v2.3.4 | **Last Updated**: 10/4/2025 | **Status**: ✅ Current
