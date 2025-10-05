@@ -1,5 +1,5 @@
 
-<!-- InquiryCircle2 – ProjectSpec – Stage2 – 10/4/2025 at 9:00 PM ET -->
+<!-- InquiryCircle2 – ProjectSpec – Stage2 – 10/4/2025 at 10:30 PM ET -->
 
 # Project Specification
 
@@ -392,13 +392,171 @@ backend/interactions/
 ### Extensibility
 
 The `interactions` app name was chosen to support future features beyond reactions:
-- ✅ Reactions (12 types, 3 visibility modes)
+- ✅ Reactions (12 types, 3 visibility modes) - Stubs and workorders created
+- ✅ Airtime Allocation System (AAS) - Stubs and workorders created
 - 📋 Polls (future)
 - 📋 Q&A (future)
 - 📋 Hand-raising (future)
 - 📋 Annotations (future)
 
 All follow the same clean architecture pattern: domain → infrastructure → application → presentation.
+
+---
+
+## Airtime Allocation System (AAS)
+
+### Overview
+The Airtime Allocation System manages speaking time distribution in InquiryCircle meetings through configurable rules and enforcement mechanisms.
+
+### Core Concepts
+
+**Time Tracking (Hourglass System)**
+- Monitor dominant speaker via Jitsi API
+- Track cumulative speaking time per participant
+- Display visual indicators and warnings
+- Advisory enforcement (stats and warnings only)
+
+**Allocation Rules**
+Six different algorithms for distributing speaking time:
+1. **Equal Share**: `duration / num_participants`
+2. **Custom Allocation**: Facilitator-defined (e.g., invited speaker gets more)
+3. **Progressive Stack**: Less spoken = higher priority
+4. **Round-Robin**: Fixed time slots in rotation
+5. **Reaction-Based**: Positive reactions add time, negative subtract (depends on reactions)
+6. **Advisory Only**: Track and report, no enforcement
+
+**Enforcement Levels**
+- **ADVISORY**: Stats only, no control
+- **SOFT**: Warnings and prompts
+- **HARD**: Auto-mute when time expires
+
+**Time Lending**
+- Participants can transfer unused time to others
+- Lending cap (default 50% of allocation)
+- Validates available time before transfer
+- Broadcasts updates to all participants
+
+### Domain Models
+
+**Value Objects:**
+- `TimeAllocation` - Participant time budget (allocated, used, borrowed, lent)
+- `SpeakingSession` - Single speaking instance (start, end, duration)
+- `MeetingContext` - Meeting metadata (scheduled vs. adhoc, duration, participants)
+- `TimeWarning` - Warning event (yellow 50%, orange 25%, red 5%)
+- `MuteCommand` - Mute/unmute command (hard enforcement)
+
+**Services:**
+- `AirtimeTracker` - Real-time speaking time tracking
+- `AllocationCalculator` - Calculate time allocations per rule
+- `TimeLendingService` - Transfer time between participants
+
+**Interfaces:**
+- `AirtimeRepository` - Persistence (sessions, allocations, history)
+- `SpeakerTracker` - Jitsi integration (dominant speaker events)
+- `AirtimeBroadcaster` - Event distribution (warnings, mute commands, updates)
+
+### Token Economy (Future)
+
+Advanced integration combining reactions with airtime allocation:
+
+**Token Mechanics:**
+- Speaking costs tokens (1 token = 30 seconds default)
+- Sending reactions costs tokens
+- Receiving positive reactions earns tokens
+- Receiving negative reactions reduces tokens
+
+**Token Costs/Rewards:**
+```
+Sending "love": -2 tokens
+Receiving "love": +2 tokens
+Sending "like": -1 token
+Receiving "like": +1 token
+Sending "dislike": -1 token (target loses 1 token)
+Sending "hate": -2 tokens (target loses 2 tokens)
+```
+
+**Dependencies:**
+Token economy requires reaction system to be implemented first.
+
+### Facilitator Controls
+
+Facilitators have complete override capabilities:
+- Choose allocation rule for meeting
+- Set enforcement level (advisory/soft/hard)
+- Override rules (bypass, reallocate, pause)
+- View real-time usage statistics
+- Manually grant time bonuses/penalties
+
+### Integration with Jitsi
+
+**Event Handling:**
+- Listen for `dominantSpeakerChanged` events from Jitsi iframe
+- Track speaking sessions automatically
+- Calculate duration when speaker changes
+- Update allocations and check warnings
+
+**Control Commands:**
+- Can send mute/unmute commands (hard enforcement)
+- Broadcast time warnings to participants
+- Update UI displays with current allocations
+
+### Development Phases
+
+**Phase 1: Basic Time Tracking** (Foundation established)
+- Implement airtime.py domain models
+- Track speaking time (no enforcement)
+- Display stats to participants
+- Workorders: airtime-domain.yml, airtime-tests.yml
+
+**Phase 2: Allocation Rules** (Deferred)
+- Implement rule algorithms
+- Add warning system
+- Soft enforcement (warnings only)
+- UI: Time allocation displays, warning indicators
+
+**Phase 3: Policy Enforcement** (Deferred)
+- Implement policy layer
+- Add hard enforcement (auto-mute)
+- Facilitator override controls
+- UI: Enforcement controls
+
+**Phase 4: Token Economy** (Deferred)
+- Integrate with reaction system
+- Implement token transactions
+- Full economic model
+- UI: Token balance displays
+
+### File Structure
+
+```
+backend/interactions/
+├── domain/
+│   ├── reactions.py         # Reaction system
+│   ├── airtime.py           # AAS core (Phase 1)
+│   ├── allocation_rules.py  # Rule implementations (Phase 2)
+│   └── token_economy.py     # Token system (Phase 4, depends on reactions)
+├── infrastructure/
+│   ├── jitsi_tracker.py     # Speaker tracking (Phase 2)
+│   └── ...
+├── policies/
+│   └── airtime_policy.py    # Policy enforcement (Phase 3)
+└── tests/
+    ├── test_reactions.py
+    └── test_airtime.py      # AAS tests (Phase 1)
+```
+
+### Current Status
+
+**✅ Foundation Complete:**
+- Stub files created (7 files, 1,652 lines)
+- Workorders created (domain + tests)
+- Architecture documented
+- Ready for Haiku execution
+
+**📋 Pending Implementation:**
+- Domain models (workorder-airtime-domain.yml)
+- Unit tests (workorder-airtime-tests.yml)
+- Infrastructure adapters (Phase 2+)
 
 ---
 
