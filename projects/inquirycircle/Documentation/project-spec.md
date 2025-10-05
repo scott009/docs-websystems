@@ -1,5 +1,5 @@
 
-<!-- InquiryCircle2 – ProjectSpec – Stage2 – 10/4/2025 at 3:30 PM ET -->
+<!-- InquiryCircle2 – ProjectSpec – Stage2 – 10/4/2025 at 9:00 PM ET -->
 
 # Project Specification
 
@@ -48,6 +48,20 @@ Deliver a working full-stack InquiryCircle system with progressive feature enhan
   - Height matches reaction bar, approximately 1/3 screen width
   - JSON-based element descriptions in `/frontend/public/data/element-descriptions.json`
   - Development/exploration tool for system examination
+
+### Stage 2.4.0-foundation (✅ Complete)
+- **Workorder System**: YAML-based specifications for AI-assisted development
+  - Structured workorders in `/workorders/` directory
+  - Template system for creating new workorders
+  - Clear specifications for domain models, tests, and infrastructure
+  - Enable lower-level AI models (Haiku) to execute well-defined tasks
+  - Workorders created: reactions-domain, reactions-tests
+- **Interactions App Skeleton**: Foundation for reaction system and future interactions
+  - Clean architecture: domain, infrastructure, policies, tests subdirectories
+  - Domain-first approach (pure Python, framework-agnostic)
+  - Django app structure ready for Phase 1-4 development
+  - Comprehensive README documenting architecture and phases
+  - UI components already exist (ReactionBar1/2, element-descriptions.json)
 
 ### Stage 2.x Deferred
 - Self-hosted Jitsi, PostgreSQL migration, advanced analytics, multi-tenant support
@@ -275,6 +289,119 @@ Each display element may support different capabilities as needed:
 
 ---
 
+## Interactions Architecture
+
+### Overview
+InquiryCircle uses a **Clean Architecture** approach for user interactions (reactions, polls, Q&A, etc.) that separates business logic from infrastructure concerns.
+
+### Architecture Layers
+
+**Layer 1: Domain (Pure Python)**
+- Pure business logic with no framework dependencies
+- Testable with fakes/mocks, no database or network required
+- Location: `/backend/interactions/domain/`
+- Example: `reactions.py` - Reaction types, visibility modes, services
+
+**Layer 2: Infrastructure (Django/Channels Adapters)**
+- Concrete implementations of domain interfaces
+- Connects to database, cache, WebSocket channels
+- Location: `/backend/interactions/infrastructure/`
+- Example: `repository.py`, `broadcaster.py`, `cache.py`
+
+**Layer 3: Application (APIs and Endpoints)**
+- HTTP REST APIs and WebSocket consumers
+- Orchestrates use cases using domain services
+- Location: `/backend/interactions/` (views.py, consumers.py)
+
+**Layer 4: Presentation (Vue Components)**
+- UI components that call backend APIs
+- Location: `/frontend/src/components/reactions/`
+- Already implemented: ReactionBar1.vue, ReactionBar2.vue
+
+### Workorder System
+
+**Purpose**: Enable AI assistants (especially lower-level models like Haiku) to build components from structured YAML specifications.
+
+**Location**: `/workorders/`
+
+**Structure**:
+- `workorder-[feature]-[component].yml` - Detailed specifications
+- `templates/workorder-template.yml` - Template for new workorders
+- `README.md` - Documentation and workflow
+
+**Workorder Contents**:
+- Metadata: title, assigned AI, stage, priority, dependencies
+- Context: business description, reference materials, rules
+- Deliverables: output paths, required components
+- Specifications: detailed class/function/test specs
+- Technical Requirements: dependencies, code style, structure
+- Acceptance Criteria: functional and technical requirements
+- Validation: commands to verify correctness
+- Notes & Hints: guidance for AI execution
+
+**Development Philosophy**:
+- Build tested, production-ready code BEFORE integration
+- Domain logic stays pure and reusable
+- Lower-level AIs execute well-defined tasks efficiently
+- Tests verify correctness independent of UI/framework
+
+### Interactions App Structure
+
+```
+backend/interactions/
+├── domain/              # Pure Python business logic
+│   └── reactions.py     # Reaction domain models (Phase 1)
+├── infrastructure/      # Django/Channels adapters (Phase 2)
+│   ├── repository.py    # Database persistence
+│   ├── broadcaster.py   # WebSocket broadcasting
+│   └── cache.py         # Participant directory
+├── policies/            # Business rules (Phase 2)
+│   └── reaction_policy.py
+├── tests/               # Unit and integration tests
+│   └── test_reactions.py
+├── models.py            # Django models (Phase 2)
+├── consumers.py         # WebSocket endpoints (Phase 3)
+├── views.py             # HTTP endpoints (Phase 3)
+└── README.md            # Architecture documentation
+```
+
+### Development Phases
+
+**Phase 1: Domain Layer** (Foundation established)
+- Build pure Python domain models
+- Write comprehensive unit tests with fakes
+- No Django dependencies, fully testable in isolation
+- Workorders: reactions-domain.yml, reactions-tests.yml
+
+**Phase 2: Infrastructure Layer** (Deferred)
+- Implement Django/Channels adapters
+- Create database models for persistence
+- Connect to Redis for caching
+- Implement policy enforcement
+
+**Phase 3: Application Layer** (Deferred)
+- Build WebSocket consumers for real-time
+- Create HTTP API endpoints as fallback
+- Wire up routing and authentication
+
+**Phase 4: Frontend Integration** (Deferred)
+- Connect Vue components to backend APIs
+- Implement real-time event handling
+- UI components already exist, just need connection
+
+### Extensibility
+
+The `interactions` app name was chosen to support future features beyond reactions:
+- ✅ Reactions (12 types, 3 visibility modes)
+- 📋 Polls (future)
+- 📋 Q&A (future)
+- 📋 Hand-raising (future)
+- 📋 Annotations (future)
+
+All follow the same clean architecture pattern: domain → infrastructure → application → presentation.
+
+---
+
 ## Documentation Standards
 
 ### Version Strategy
@@ -310,4 +437,4 @@ Older versions must be marked explicitly, e.g.:
 **Related Documentation**:  
 [operations-guide](./operations-guide.md) | [infrastructure](./infrastructure.md) | [README](./README.md) | [CHANGELOG](./CHANGELOG.md)
 
-**Document Version**: v2.3.4 | **Last Updated**: 10/4/2025 | **Status**: ✅ Current
+**Document Version**: v2.4.0-foundation | **Last Updated**: 10/4/2025 | **Status**: ✅ Current
