@@ -1,19 +1,20 @@
 
 
-<!-- InquiryCircle2 – README – Stage2 – 9/12/2025 at 9:30 AM ET -->
+<!-- InquiryCircle2 – README – Stage2 – 10/26/2025 at 12:00 PM ET -->
 
 # InquiryCircle
 
-InquiryCircle is a collaborative video conferencing platform designed for inquiry-based learning groups. It provides virtual “circles” where facilitators and participants meet with role-based access, integrated video, and real-time messaging.
+InquiryCircle is a collaborative video conferencing platform designed for inquiry-based learning and collaborative work. It provides virtual "circles" with specialized workflows—from discussion meetings to collaborative translation editing—where facilitators and participants work together with role-based access, integrated video, and real-time interactions.
 
 ---
 
 ## Features
-- **Video Conferencing** – Powered by the Jitsi SDK.  
-- **Key-Based Access** – No usernames/passwords; keys define access and roles.  
-- **Role Management** – Facilitators guide sessions, participants receive guidance.  
-- **Facilitator Messaging** – Real-time text/HTML messages shared into the circle.  
-- **Circles** – Customizable spaces for different groups.  
+- **Circle Types** – Specialized experiences (translation circles, discussion circles, study groups).
+- **Video Conferencing** – Powered by the Jitsi SDK for real-time collaboration.
+- **Key-Based Access** – No usernames/passwords; keys define access and roles.
+- **Role Management** – Facilitators control settings, participants contribute content.
+- **Composable UI** – Modular display elements adapt to different circle types.
+- **Translation Circles** – Collaborative review and correction of AI-generated translations.  
 
 ---
 
