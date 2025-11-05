@@ -1,5 +1,5 @@
 
-<!-- InquiryCircle2 – OperationsGuide – Stage2 – 9/12/2025 at 8:45 AM ET -->
+<!-- InquiryCircle2 – OperationsGuide – Stage 2.5.0 – 11/05/2025 at 8:30 AM ET -->
 
 # Operations Guide
 
@@ -17,13 +17,19 @@ This document is procedural: it captures development workflows, deployment steps
 When starting a new AI session (especially when switching models):
 ```bash
 # Run the context loader to bring AI up to speed
-/home/scott/inquirycircle/context-loader.sh
+/home/scott/inquirycircle/context-loader.sh  
+  
+Test Credentials (Current)
+- **Facilitator Key**: `facilitator-key-123`
+- **Participant Key**: `participant-key-456`
+- **Storage**: Secrets kept in Bitwarden secure note
 ```
 
 This script loads all canonical documentation from DOCS-ENV:
 - **project-spec.md** - Architecture and constraints
 - **STATUS.md** - Current progress and priorities
 - **operations-guide.md** - Procedures and commands
+-  **operations-guide2.md** - Procedures and commands
 - **infrastructure.md** - Environment setup
 - **CHANGELOG.md** - Documentation evolution
 
@@ -179,15 +185,16 @@ The Remote repo when working in the DOCS-ENV environment is     https://github.c
 ---
 
 ## Development Guardrails
-- Operate only in **bash** on WSL and VPS (no PowerShell).  
+- Operate only in **bash** on WSL and VPS (no PowerShell).
 - All VPS actions are done by the operator over SSH. AI may suggest commands, but must not assume execution access
-- When creating files, use `echo "..." > filename` for the first line and  
-  `echo "..." >> filename` for subsequent lines (instead of heredocs). 
-- Keep filesystem locations as documented in Infrastructure.md.  
-- Proceed incrementally: verify each step before moving forward.  
-- Be rollback-ready at all times (retain prior configs and builds).  
-- Capture evidence: logs, health checks, curl outputs, screenshots.  
+- When creating files, use `echo "..." > filename` for the first line and
+  `echo "..." >> filename` for subsequent lines (instead of heredocs).
+- Keep filesystem locations as documented in Infrastructure.md.
+- Proceed incrementally: verify each step before moving forward.
+- Be rollback-ready at all times (retain prior configs and builds).
+- Capture evidence: logs, health checks, curl outputs, screenshots.
 - Use test keys in development; production keys stored securely in `/etc/inquirycircle/env`.
+- **NEVER mark stages as complete in STATUS.md** - Always wait for explicit user confirmation before marking any stage, micro-version, or task as completed. The user will review implementation and confirm completion status.
 
 ---
 

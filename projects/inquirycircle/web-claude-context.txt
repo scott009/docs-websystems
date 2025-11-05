@@ -1,0 +1,3435 @@
+
+[0;34mℹ️[0m Loading InquiryCircle project context from DOCS-ENV...
+
+[0;34mℹ️[0m Documentation source: /mnt/c/Users/scott/Documents/AIProjects/Markdown/docs-websystems/projects/inquirycircle/Documentation
+
+[0;32m✅[0m Loading project specification...
+
+<!-- InquiryCircle2 – ProjectSpec – Stage2 – 10/26/2025 at 11:45 AM ET -->
+
+# Project Specification
+
+## Purpose
+Define what InquiryCircle is intended to deliver in Stage 2, the architecture it rests on, and the constraints that shape development. This document sets the *what* and the *rules of the game* — not the step-by-step *how* (that lives in OperationsGuide.md) and not the evolving goals/minor versions (that live in Status.md).
+
+---
+
+## Stage 2 Definition
+Deliver a working full-stack InquiryCircle system with progressive feature enhancements:
+
+### Stage 2.1 (✅ Complete)
+- **Frontend**: Vue 3 + Tailwind SPA with Jitsi integration
+- **Backend**: Django + DRF with key-based authentication and SQLite persistence
+- **Gateway**: Caddy as the single entrypoint, serving static files and proxying `/api` requests
+- **Containers**: Docker Compose for dev/prod parity (WSL ↔ VPS)
+- **Outcome**: Minimal viable system deployed and operational on VPS
+
+### Stage 2.2 (✅ Complete)
+- **PDF Viewer Component**: Scrolling document panel alongside video interface
+- **Multi-User PDF Display**: Same document visible to facilitator and participants
+- **Independent Navigation**: Each user can scroll through PDF independently
+- **Panel Integration**: Non-overlay layout preserving video functionality
+- **Micro-versions**:
+  - 2.2.1: Multiple PDF files with facilitator selection
+  - 2.2.2: HTML Window Components architecture
+
+### Stage 2.3 (✅ Complete)
+- **Route Restructure**: New route organization for meeting and administration
+  - `/meeting`: Standard participant meeting interface
+  - `/facmeet`: Facilitator meeting interface with enhanced controls
+  - `/administration`: Circle and facilitator management
+  - `/tests`: System health checks and component testing
+  - `/facpanel`: Facilitator control panel
+- **TopBar Component**: Global navigation with NavMenu1 and StatusBar1
+- **Simplified Jitsi**: Direct public Jitsi embed (development configuration)
+- **Reaction Bars**: Interactive reaction system for participants and facilitators
+
+### Stage 2.3.4 (✅ Complete)
+- **DescBar1 Component**: Element description display system
+  - Positioned below reaction bars, always visible
+  - Displays element label, ID, and functional description
+  - Interactive: Updates on click of included UI elements
+  - Covers 30 interactive elements (reactions, options, labels)
+  - Visual styling: Light buff background, black border
+  - Height matches reaction bar, approximately 1/3 screen width
+  - JSON-based element descriptions in `/frontend/public/data/element-descriptions.json`
+  - Development/exploration tool for system examination
+
+### Stage 2.4.0-foundation (✅ Complete)
+- **Workorder System**: YAML-based specifications for AI-assisted development
+  - Structured workorders in `/workorders/` directory
+  - Template system for creating new workorders
+  - Clear specifications for domain models, tests, and infrastructure
+  - Enable lower-level AI models (Haiku) to execute well-defined tasks
+  - Workorders created: reactions-domain, reactions-tests
+- **Interactions App Skeleton**: Foundation for reaction system and future interactions
+  - Clean architecture: domain, infrastructure, policies, tests subdirectories
+  - Domain-first approach (pure Python, framework-agnostic)
+  - Django app structure ready for Phase 1-4 development
+  - Comprehensive README documenting architecture and phases
+  - UI components already exist (ReactionBar1/2, element-descriptions.json)
+
+### Stage 2.x Deferred
+- Self-hosted Jitsi, PostgreSQL migration, advanced analytics, multi-tenant support
+
+---
+
+## Stage 2 Scope Test
+A feature belongs in Stage 2 if it can be built with the Vue frontend, Django backend, and external Jitsi SDK, persists data in SQLite, and is served through Caddy/Compose **without introducing new infrastructure or authentication models**.
+
+### Stage 2.2 Scope Validation
+The PDF viewer feature meets Stage 2 criteria:
+- ✅ **Frontend**: Vue component for PDF display using existing libraries
+- ✅ **Backend**: Django static file serving or simple PDF API endpoints
+- ✅ **No new infrastructure**: Uses existing Caddy/Docker setup
+- ✅ **No new authentication**: Leverages existing key-based access
+- ✅ **Progressive enhancement**: Builds on Stage 2.1 foundation
+
+---
+
+## Constraints (Strategic “musts”)
+- **Authentication**: All user access via keys (no usernames/passwords).  
+- **Roles**: Keys determine facilitator vs participant.  
+- **Networking**: Caddy is the only public surface; backend is internal-only.  
+- **Video**: External Jitsi service only (self-hosting is later).  
+- **Data**: Persistence through volumes/bind mounts; no data stored in containers.  
+- **Environments**: WSL path `/home/scott/inquirycircle`, VPS path `/srv/inquirycircle`.  
+- **Repositories**: GitHub `scott009/InquiryCircle` (main), `scott009/InquiryCircle-legacy` (history).
+
+---
+
+## Technical Architecture
+
+### Core Components
+- **Caddy**: Reverse proxy, TLS termination, static file server.  
+- **Frontend (Vue 3 + Tailwind + Jitsi SDK)**: SPA with video, messaging, circle management.  
+- **Backend (Django + DRF + Gunicorn)**: REST APIs for circles, messages, authentication, and Jitsi config.  
+- **Data Layer**: SQLite file (Stage 2 baseline).
+
+### How Components Interact
+Internet → Caddy
+├─ serves SPA (Vue + Tailwind + Jitsi build)
+└─ proxies /api/* → Backend (Django/Gunicorn)
+↳ manages circles, auth, messaging
+↳ integrates with external Jitsi
+↳ persists data in SQLite
+
+---
+
+## Display Component Architecture
+
+### Architectural Model
+InquiryCircle uses a **hierarchical component composition** where routes present user experiences through composable display elements.
+
+**Three-Layer Structure**:
+- **Route Level**: URL paths that define user experiences (`/test-jitsi`, `/facilitator-dashboard`)
+- **Display Component Level**: Vue components that orchestrate multiple display elements
+- **Display Element Level**: Individual content panels that can be reused across displays
+
+### Display Elements (Composable)
+
+**Architecture Verified from /meeting Route Analysis**:
+
+The InquiryCircle meeting interface demonstrates a hierarchical composition where visual elements map directly to both frontend components and backend domain logic. The `/meeting` route provides the canonical example of display element integration.
+
+**Element Mapping Table**:
+| Label | ID | Parent | Class | File |
+|-------|----|---------|---------|----|
+| topbar | topbar1 | NA | NA | NA |
+| reactionbar | reaction1 | NA | NA | NA |
+| reactionbar2 | reaction2 | NA | NA | NA |
+| DescriptionBar | descbar1 | NA | DescBar1.vue | DescBar1.vue |
+| Navigation Menu | navmenu1 | topbar1 | NA | NA |
+| StatusBar | statbar1 | topbar1 | NA | NA |
+| User Name | username | statbar1 | NA | NA |
+| User Role | userrole | statbar1 | NA | NA |
+| CircleName | circname | statbar1 | NA | NA |
+| Logout/login | logout1 | navmenu1 | NA | NA |
+| participant 2 | part2 | jitsiwin1 | NA | NA |
+| participant's perspective | partpersp | jitsiwin1 | NA | NA |
+| Speaker | speaker1 | jitsiwin1 | NA | NA |
+| participant1 | part1 | jitsiwin1 | NA | NA |
+| participant 3 | part3 | jitsiwin1 | NA | NA |
+| Facilitator | facil1 | jitsiwin1 | NA | NA |
+| jitsiwin1 | jitsi1 | mainarea | NA | NA |
+| ContentPanel1 | content1 | mainarea | NA | NA |
+| Like | like1 | reaction1 | LikeReaction | reactions.py |
+| Love | love1 | reaction1 | LoveReaction | reactions.py |
+| Dislike | dislike1 | reaction1 | DislikeReaction | reactions.py |
+| Hate | hate1 | reaction1 | HateReaction | reactions.py |
+| Agree | agree1 | reaction1 | AgreeReaction | reactions.py |
+| Disagree | disagree1 | reaction1 | DisagreeReaction | reactions.py |
+| Hurry Up | hurryup1 | reaction1 | HurryUpReaction | reactions.py |
+| Go on | goon1 | reaction1 | GoOnReaction | reactions.py |
+| Interesting | interest1 | reaction1 | InterestingReaction | reactions.py |
+| Boring | boring1 | reaction1 | BoringReaction | reactions.py |
+| Sympathy | sympathy1 | reaction1 | SympathyReaction | reactions.py |
+| Laugh | laugh1 | reaction1 | LaughReaction | reactions.py |
+| Like | like_l1 | reaction2 | NA | NA |
+| Love | love_l1 | reaction2 | NA | NA |
+| Dislike | dislike_l1 | reaction2 | NA | NA |
+| Hate | hate_l1 | reaction2 | NA | NA |
+| Agree | agreel1 | reaction2 | NA | NA |
+| Disagree | disagree_l1 | reaction2 | NA | NA |
+| Hurry Up | hurryup_l1 | reaction2 | NA | NA |
+| Go on | goon_l1 | reaction2 | NA | NA |
+| Interesting | interest_l1 | reaction2 | NA | NA |
+| Boring | boring_l1 | reaction2 | NA | NA |
+| Sympathy | sympathy_l1 | reaction2 | NA | NA |
+| Laugh | laugh_l1 | reaction2 | NA | NA |
+| roptionPublic | ropt1 | reaction1 | NF | NF |
+| roptionAnon | ropt2 | reaction1 | NF | NF |
+| roptionSecret | ropt3 | reaction1 | NF | NF |
+| rchoicePublic | rch1 | reaction2 | NF | NF |
+| rchoiceAnon | rch2 | reaction2 | NF | NF |
+| rchoiceSecret | rch3 | reaction2 | NF | NF |
+| English Text Display | engtxt1 | mainarea | NF | NF |
+| AI Translation Display | aitrans1 | mainarea | NF | NF |
+| Corrected Text Editor | corrected1 | mainarea | NF | NF |
+| Document Navigator | docnav1 | mainarea | NF | NF |
+
+**Core Display Areas**:
+- **topbar**: Navigation and user identity elements
+- **mainarea**: Primary content (video conference + content panel)
+- **jitsiwin1**: Video conference interface with participant tiles
+- **reaction1**: Reaction button interface mapped to domain classes
+- **descbar1**: Element description panel for UI exploration and documentation
+- **bottombar**: Status and reaction aggregation displays
+
+**Frontend-Backend Integration**:
+- **UI Elements** (navmenu1, username, etc.): Vue components for interface
+- **Reaction Elements** (like1, love1, etc.): Direct mapping to Python domain classes
+- **Container Elements** (topbar, mainarea, etc.): Layout composition structures
+- **Content Elements** (content1, reactionbx1): Dynamic content areas
+
+**Reaction System Architecture**:
+The reaction elements demonstrate clean separation between presentation and domain logic:
+- Each reaction button maps to a concrete class in `reactions.py`
+- WebSocket communication handled by `consumers.py`
+- Policy validation through `policy_impl.py`
+- Real-time broadcasting via `broadcast_channels.py`
+- Participant context from `directory_cache.py`
+
+**DescBar1 Architecture**:
+The element description system provides interactive documentation for UI elements:
+- **Interactive Elements** (30 total):
+  - Reaction buttons (24): like1, love1, dislike1, hate1, agree1, disagree1, hurryup1, goon1, interest1, boring1, sympathy1, laugh1 (reaction1) + label equivalents (reaction2)
+  - Reaction options (6): ropt1, ropt2, ropt3, rch1, rch2, rch3
+- **Excluded Elements**: TopBar components, non-clickable containers
+- **Data Source**: JSON file at `/frontend/public/data/element-descriptions.json`
+- **Display Format**: Element header (label + ID) + functional description
+- **Update Trigger**: Click event on any included element
+- **Visibility**: Currently visible to all users (future: per-circle admin control)
+- **Use Cases**: Developer exploration, system documentation, user training, facilitator reference
+
+### Display Element Capabilities (Optional)
+Each display element may support different capabilities as needed:
+
+**Content Sources** (verified in screenshot):
+- Static HTML files served through Caddy (ContentPanel1, ContentPanel2)
+- Vue template rendering with dynamic data (TopMenu1, TitleBlock, StatusWin1)
+- API-driven content from Django backend (StatusWin1, Widget1, Widget2)
+- External service integration (JitsiWin1)
+- System notifications and status messages (Bar1)
+
+**Navigation Methods** (evident from content panels):
+- Independent scroll state per user (ContentPanel1, ContentPanel2)
+- Table of contents navigation (ContentPanel1)
+- Document text display with formatting (ContentPanel2)
+- Widget-based controls (Widget1, Widget2)
+
+**Layout Behaviors** (confirmed from visual layout):
+- Fixed positioning within display component (all elements)
+- Grid-based responsive layout (3-row, 9-element composition)
+- Hierarchical sizing (JitsiWin1 dominant, others supporting)
+- Symmetric balance (Widget1 ↔ Widget2, ContentPanel1 ↔ ContentPanel2)
+- Status persistence (StatusWin1, Bar1)
+
+**User Permissions** (inferred from interface elements):
+- Navigation menu access (TopMenu1)
+- Status monitoring (StatusWin1)
+- Content interaction (ContentPanel1, ContentPanel2)
+- Widget control access (Widget1, Widget2)
+- Video conference participation (JitsiWin1)
+- System message visibility (Bar1)
+
+### Composition Patterns
+**Current Implementations**:
+- **test-video-integration route**:
+  - **Layout**: 3-row composition with 9 total elements
+  - **Top Row**: TopMenu1 (full width) + TitleBlock (center) + StatusWin1 (right)
+  - **Middle Row**: JitsiWin1 (dominant center video interface)
+  - **Bottom Row**: Bar1 (full width notification) + Widget1/ContentPanel1 (left) + Widget2/ContentPanel2 (right)
+- **Future routes**: May use different combinations of available elements
+
+**Layout Architecture**:
+- **Grid-based composition**: Elements arranged in responsive grid patterns
+- **Hierarchical sizing**: JitsiWin1 dominates center, supporting elements surround
+- **Mirrored widgets**: Widget1 and Widget2 provide balanced control placement
+- **Content symmetry**: ContentPanel1 and ContentPanel2 offer dual-pane content display
+
+**Composition Rules**:
+- Display elements maintain independent state unless explicitly synchronized
+- Each route defines which elements are included and how they're arranged
+- Elements can be reused across different route/display combinations
+- New routes can be created by composing existing elements in new ways
+- Widget pairing maintains visual balance (Widget1 ↔ Widget2)
+- Content panels provide flexible document display (ContentPanel1 ↔ ContentPanel2)
+
+### Implementation Strategy
+**Stage 2.2.2 Focus**:
+- Replace `pdfviewer` with enhanced ContentPanel1/ContentPanel2 implementation
+- Add local stylesheet support to content display elements
+- Maintain existing 9-element composition while improving individual element capabilities
+- Preserve Widget1/Widget2 mirrored control architecture
+
+**Verified Architecture Benefits**:
+- **Visual Balance**: Widget1/Widget2 pairing creates symmetric interface
+- **Content Flexibility**: ContentPanel1/ContentPanel2 support diverse content types
+- **Video Prominence**: JitsiWin1 central placement prioritizes video interaction
+- **Status Integration**: StatusWin1 provides persistent state information
+- **Navigation Consistency**: TopMenu1 and TitleBlock establish clear hierarchy
+
+**Future Enhancement Path**:
+- Add new display elements without changing existing routes
+- Create new route experiences by composing elements differently
+- Enhance individual element capabilities (static → dynamic content)
+- Maintain backward compatibility through capability-based design
+- Expand Widget1/Widget2 control capabilities while preserving balance
+
+---
+
+## Interactions Architecture
+
+### Overview
+InquiryCircle uses a **Clean Architecture** approach for user interactions (reactions, polls, Q&A, etc.) that separates business logic from infrastructure concerns.
+
+### Architecture Layers
+
+**Layer 1: Domain (Pure Python)**
+- Pure business logic with no framework dependencies
+- Testable with fakes/mocks, no database or network required
+- Location: `/backend/interactions/domain/`
+- Example: `reactions.py` - Reaction types, visibility modes, services
+
+**Layer 2: Infrastructure (Django/Channels Adapters)**
+- Concrete implementations of domain interfaces
+- Connects to database, cache, WebSocket channels
+- Location: `/backend/interactions/infrastructure/`
+- Example: `repository.py`, `broadcaster.py`, `cache.py`
+
+**Layer 3: Application (APIs and Endpoints)**
+- HTTP REST APIs and WebSocket consumers
+- Orchestrates use cases using domain services
+- Location: `/backend/interactions/` (views.py, consumers.py)
+
+**Layer 4: Presentation (Vue Components)**
+- UI components that call backend APIs
+- Location: `/frontend/src/components/reactions/`
+- Already implemented: ReactionBar1.vue, ReactionBar2.vue
+
+### Workorder System
+
+**Purpose**: Enable AI assistants (especially lower-level models like Haiku) to build components from structured YAML specifications.
+
+**Location**: `/workorders/`
+
+**Structure**:
+- `workorder-[feature]-[component].yml` - Detailed specifications
+- `templates/workorder-template.yml` - Template for new workorders
+- `README.md` - Documentation and workflow
+
+**Workorder Contents**:
+- Metadata: title, assigned AI, stage, priority, dependencies
+- Context: business description, reference materials, rules
+- Deliverables: output paths, required components
+- Specifications: detailed class/function/test specs
+- Technical Requirements: dependencies, code style, structure
+- Acceptance Criteria: functional and technical requirements
+- Validation: commands to verify correctness
+- Notes & Hints: guidance for AI execution
+
+**Development Philosophy**:
+- Build tested, production-ready code BEFORE integration
+- Domain logic stays pure and reusable
+- Lower-level AIs execute well-defined tasks efficiently
+- Tests verify correctness independent of UI/framework
+
+### Interactions App Structure
+
+```
+backend/interactions/
+├── domain/              # Pure Python business logic
+│   └── reactions.py     # Reaction domain models (Phase 1)
+├── infrastructure/      # Django/Channels adapters (Phase 2)
+│   ├── repository.py    # Database persistence
+│   ├── broadcaster.py   # WebSocket broadcasting
+│   └── cache.py         # Participant directory
+├── policies/            # Business rules (Phase 2)
+│   └── reaction_policy.py
+├── tests/               # Unit and integration tests
+│   └── test_reactions.py
+├── models.py            # Django models (Phase 2)
+├── consumers.py         # WebSocket endpoints (Phase 3)
+├── views.py             # HTTP endpoints (Phase 3)
+└── README.md            # Architecture documentation
+```
+
+### Development Phases
+
+**Phase 1: Domain Layer** (Foundation established)
+- Build pure Python domain models
+- Write comprehensive unit tests with fakes
+- No Django dependencies, fully testable in isolation
+- Workorders: reactions-domain.yml, reactions-tests.yml
+
+**Phase 2: Infrastructure Layer** (Deferred)
+- Implement Django/Channels adapters
+- Create database models for persistence
+- Connect to Redis for caching
+- Implement policy enforcement
+
+**Phase 3: Application Layer** (Deferred)
+- Build WebSocket consumers for real-time
+- Create HTTP API endpoints as fallback
+- Wire up routing and authentication
+
+**Phase 4: Frontend Integration** (Deferred)
+- Connect Vue components to backend APIs
+- Implement real-time event handling
+- UI components already exist, just need connection
+
+### Extensibility
+
+The `interactions` app name was chosen to support future features beyond reactions:
+- ✅ Reactions (12 types, 3 visibility modes) - Stubs and workorders created
+- ✅ Airtime Allocation System (AAS) - Stubs and workorders created
+- 📋 Polls (future)
+- 📋 Q&A (future)
+- 📋 Hand-raising (future)
+- 📋 Annotations (future)
+
+All follow the same clean architecture pattern: domain → infrastructure → application → presentation.
+
+---
+
+## Airtime Allocation System (AAS)
+
+### Overview
+The Airtime Allocation System manages speaking time distribution in InquiryCircle meetings through configurable rules and enforcement mechanisms.
+
+### Core Concepts
+
+**Time Tracking (Hourglass System)**
+- Monitor dominant speaker via Jitsi API
+- Track cumulative speaking time per participant
+- Display visual indicators and warnings
+- Advisory enforcement (stats and warnings only)
+
+**Allocation Rules**
+Six different algorithms for distributing speaking time:
+1. **Equal Share**: `duration / num_participants`
+2. **Custom Allocation**: Facilitator-defined (e.g., invited speaker gets more)
+3. **Progressive Stack**: Less spoken = higher priority
+4. **Round-Robin**: Fixed time slots in rotation
+5. **Reaction-Based**: Positive reactions add time, negative subtract (depends on reactions)
+6. **Advisory Only**: Track and report, no enforcement
+
+**Enforcement Levels**
+- **ADVISORY**: Stats only, no control
+- **SOFT**: Warnings and prompts
+- **HARD**: Auto-mute when time expires
+
+**Time Lending**
+- Participants can transfer unused time to others
+- Lending cap (default 50% of allocation)
+- Validates available time before transfer
+- Broadcasts updates to all participants
+
+### Domain Models
+
+**Value Objects:**
+- `TimeAllocation` - Participant time budget (allocated, used, borrowed, lent)
+- `SpeakingSession` - Single speaking instance (start, end, duration)
+- `MeetingContext` - Meeting metadata (scheduled vs. adhoc, duration, participants)
+- `TimeWarning` - Warning event (yellow 50%, orange 25%, red 5%)
+- `MuteCommand` - Mute/unmute command (hard enforcement)
+
+**Services:**
+- `AirtimeTracker` - Real-time speaking time tracking
+- `AllocationCalculator` - Calculate time allocations per rule
+- `TimeLendingService` - Transfer time between participants
+
+**Interfaces:**
+- `AirtimeRepository` - Persistence (sessions, allocations, history)
+- `SpeakerTracker` - Jitsi integration (dominant speaker events)
+- `AirtimeBroadcaster` - Event distribution (warnings, mute commands, updates)
+
+### Token Economy (Future)
+
+Advanced integration combining reactions with airtime allocation:
+
+**Token Mechanics:**
+- Speaking costs tokens (1 token = 30 seconds default)
+- Sending reactions costs tokens
+- Receiving positive reactions earns tokens
+- Receiving negative reactions reduces tokens
+
+**Token Costs/Rewards:**
+```
+Sending "love": -2 tokens
+Receiving "love": +2 tokens
+Sending "like": -1 token
+Receiving "like": +1 token
+Sending "dislike": -1 token (target loses 1 token)
+Sending "hate": -2 tokens (target loses 2 tokens)
+```
+
+**Dependencies:**
+Token economy requires reaction system to be implemented first.
+
+### Facilitator Controls
+
+Facilitators have complete override capabilities:
+- Choose allocation rule for meeting
+- Set enforcement level (advisory/soft/hard)
+- Override rules (bypass, reallocate, pause)
+- View real-time usage statistics
+- Manually grant time bonuses/penalties
+
+### Integration with Jitsi
+
+**Event Handling:**
+- Listen for `dominantSpeakerChanged` events from Jitsi iframe
+- Track speaking sessions automatically
+- Calculate duration when speaker changes
+- Update allocations and check warnings
+
+**Control Commands:**
+- Can send mute/unmute commands (hard enforcement)
+- Broadcast time warnings to participants
+- Update UI displays with current allocations
+
+### Development Phases
+
+**Phase 1: Basic Time Tracking** (Foundation established)
+- Implement airtime.py domain models
+- Track speaking time (no enforcement)
+- Display stats to participants
+- Workorders: airtime-domain.yml, airtime-tests.yml
+
+**Phase 2: Allocation Rules** (Deferred)
+- Implement rule algorithms
+- Add warning system
+- Soft enforcement (warnings only)
+- UI: Time allocation displays, warning indicators
+
+**Phase 3: Policy Enforcement** (Deferred)
+- Implement policy layer
+- Add hard enforcement (auto-mute)
+- Facilitator override controls
+- UI: Enforcement controls
+
+**Phase 4: Token Economy** (Deferred)
+- Integrate with reaction system
+- Implement token transactions
+- Full economic model
+- UI: Token balance displays
+
+### File Structure
+
+```
+backend/interactions/
+├── domain/
+│   ├── reactions.py         # Reaction system
+│   ├── airtime.py           # AAS core (Phase 1)
+│   ├── allocation_rules.py  # Rule implementations (Phase 2)
+│   └── token_economy.py     # Token system (Phase 4, depends on reactions)
+├── infrastructure/
+│   ├── jitsi_tracker.py     # Speaker tracking (Phase 2)
+│   └── ...
+├── policies/
+│   └── airtime_policy.py    # Policy enforcement (Phase 3)
+└── tests/
+    ├── test_reactions.py
+    └── test_airtime.py      # AAS tests (Phase 1)
+```
+
+### Current Status
+
+**✅ Foundation Complete:**
+- Stub files created (7 files, 1,652 lines)
+- Workorders created (domain + tests)
+- Architecture documented
+- Ready for Haiku execution
+
+**📋 Pending Implementation:**
+- Domain models (workorder-airtime-domain.yml)
+- Unit tests (workorder-airtime-tests.yml)
+- Infrastructure adapters (Phase 2+)
+
+---
+
+## Circle Types Architecture
+
+### Overview
+InquiryCircle supports multiple **circle types**, each providing a specialized user experience while sharing core infrastructure (authentication, video conferencing, data persistence). Circle types allow different collaborative workflows without duplicating common functionality.
+
+### Circle Type Concept
+A **circle type** determines:
+- Which route/UI is presented to users
+- What content is displayed and how users interact with it
+- What specialized features are available (beyond shared features like video, reactions, airtime)
+
+All circle types share:
+- Key-based authentication
+- Facilitator and participant roles
+- External Jitsi video integration
+- Core interaction features (reactions, airtime allocation when implemented)
+- SQLite persistence
+
+### Folder Structure
+
+**Backend:**
+```
+backend/
+├── circles/              # Core circle management (existing)
+│   ├── models.py         # Base Circle model with circle_type field
+│   ├── views.py          # Generic circle APIs
+│   ├── translation/      # Translation circle backend
+│   │   ├── __init__.py
+│   │   ├── models.py     # TranslationDocument, ParagraphCorrection
+│   │   ├── views.py      # Translation-specific APIs
+│   │   ├── serializers.py
+│   │   └── services.py   # JSON file handling
+│   ├── discussion/       # FUTURE: Standard discussion circles
+│   └── study/            # FUTURE: Study group circles
+└── media/
+    └── circle_content/   # Content files for all circle types
+        ├── translations/
+        │   └── rdg_en_v3.json
+        ├── readings/     # FUTURE: PDF/HTML readings
+        └── resources/    # FUTURE: Other resources
+```
+
+**Frontend:**
+```
+frontend/src/
+├── components/
+│   ├── circles/          # Circle-type specific components
+│   │   ├── translation/
+│   │   │   ├── EnglishTextDisplay.vue
+│   │   │   ├── AITranslationDisplay.vue
+│   │   │   ├── CorrectedTextEditor.vue
+│   │   │   └── DocumentNavigator.vue
+│   │   ├── discussion/   # FUTURE
+│   │   └── study/        # FUTURE
+│   ├── layout/           # Shared components (TopBar, etc.)
+│   └── reactions/        # Shared components (ReactionBar1, etc.)
+├── views/
+│   ├── TranslationCircle.vue      # Translation circle route
+│   ├── DiscussionCircle.vue       # FUTURE
+│   ├── StudyCircle.vue            # FUTURE
+│   ├── Meeting.vue                # Existing
+│   └── Welcome.vue                # Existing
+└── router/
+    └── index.js          # Dynamic circle type routing
+```
+
+### Naming Consistency
+- Backend and frontend use matching terminology: `circles/translation/` on both sides
+- No "types" folder - the structure is self-documenting
+- Flat view files in `views/` (consistent with existing architecture)
+- Components organized by circle type in `components/circles/<type>/`
+
+---
+
+## Translation Circle Specification
+
+### Purpose
+Enable collaborative translation review and correction of multilingual documents through video conferencing and synchronized text editing.
+
+### Use Case
+A **Translation Circle** facilitates human verification and correction of AI-generated translations:
+1. Facilitator selects a JSON file containing source text and AI translations
+2. Facilitator selects target language (e.g., Thai, Vietnamese, Korean)
+3. Participants (native speakers or fluent in target language) join circle
+4. Group reviews text together via video while editing translation collaboratively
+5. Corrections are saved to JSON file for future reference
+
+### JSON Document Structure
+
+**Source File**: `rdg_en_v3.json` (Recovery Dharma translation project)
+
+**Structure Example** (Chapter 9, Paragraph 1):
+```json
+{
+  "type": "paragraph",
+  "id": "p9-1",
+  "text": "Dharma is a Sanskrit word meaning...",
+  "thai_text": "ธรรมะเป็นคำภาษาสันสกฤตที่มีความหมายว่า...",
+  "vietnamese_text": "Pháp là một từ Phạn ngữ...",
+  "korean_text": "다르마(Dharma)는 '진리'...",
+  "corrected_thai_text": "ธรรมะเป็นคำภาษาสันสกฤตที่มีความหมายว่า..."
+}
+```
+
+**Enhancement**: Add `corrected_<language>_text` field for each language:
+- Initially copies `<language>_text` (AI-generated translation)
+- Modified by human reviewers during translation circle sessions
+- Persisted back to JSON or database
+
+### User Interface Design
+
+**4-Window Layout** (Translation-Specific Display Elements):
+1. **English Text Display** (`engtxt1`): Read-only display of `text` field
+2. **AI Translation Display** (`aitrans1`): Read-only display of `<language>_text` field
+3. **Corrected Text Editor** (`corrected1`): Textarea for `corrected_<language>_text` with Save button
+4. **Document Navigator** (`docnav1`): JSON-based document structure (chapters, sections, paragraphs)
+
+**Additional Elements** (shared display elements from core architecture):
+- `jitsiwin1`: Jitsi video window for collaborative video
+- `topbar1`: TopBar with navigation and user info
+- `reaction1`, `reaction2`: Reaction bars (optional, for engagement)
+- `statbar1`: Status displays
+
+**Integration with Display Component Architecture:**
+- Translation-specific elements (`engtxt1`, `aitrans1`, `corrected1`, `docnav1`) are composable display elements
+- Follow same patterns as existing elements (independent state, reusable across routes)
+- Listed in Element Mapping Table with "NF" status (not yet implemented)
+- Will be implemented as Vue components in `frontend/src/components/circles/translation/`
+- Specific layout composition to be defined during implementation (Phase 3-5)
+
+### Key Features
+
+**Content Management:**
+- JSON file serves as pure content container (no formatting, only structure)
+- Facilitator chooses document and target language
+- Navigation follows JSON hierarchy (sections → chapters → paragraphs)
+
+**Collaboration:**
+- All participants see same paragraph simultaneously
+- Independent editing (with conflict resolution in advanced phase)
+- Save button updates `corrected_<language>_text` field
+- Changes visible to all participants after save/reload
+
+**Simplified Controls:**
+- No complex facilitator controls required initially
+- Focus on content editing and video collaboration
+- Can leverage full IC feature set (airtime, reactions) when implemented
+
+### Translation Circle Development Roadmap
+
+### Implementation Status
+
+**Phase 1: Folder Structure & Stubs** ✅ **COMPLETE (10/26/2025)**
+- Backend stubs: `circles/translation/` (models, views, services, serializers, URLs)
+- Frontend stubs: `components/circles/translation/` (4 Vue components)
+- `TranslationCircle.vue` view created
+- README documentation added
+- **Status**: Foundation complete, no functionality yet
+
+**Phase 2: JSON Data Layer** ✅ **COMPLETE (10/27/2025)**
+- **Backend Implementation**:
+  - Models: `TranslationDocument`, `TranslationSession`, `ParagraphCorrection`
+  - Services: `JSONDocumentLoader` (JSON→DB), `JSONDocumentWriter` (DB→JSON)
+  - REST API: 7 endpoints for session and paragraph management
+  - Serializers: Full DRF serialization with validation
+  - URL routing: `/api/translation/*` endpoints registered
+  - Migrations: Applied and tested (translation.0001_initial)
+- **Storage Strategy**: Hybrid approach
+  - Active sessions: Fast editing in SQLite database
+  - Completed sessions: Permanent storage in JSON file with metadata
+  - Attribution: Tracks who edited, when, and approval status
+- **API Endpoints**:
+  - `POST /api/translation/sessions/start/` - Start session (load JSON into DB)
+  - `POST /api/translation/sessions/<id>/end/` - End session (save DB to JSON)
+  - `GET /api/translation/sessions/<id>/` - Get session details
+  - `GET /api/translation/sessions/<id>/paragraphs/` - List all paragraphs
+  - `GET /api/translation/paragraphs/<id>/` - Get single paragraph
+  - `PATCH /api/translation/paragraphs/<id>/update/` - Update correction
+  - `POST /api/translation/paragraphs/<id>/approve/` - Approve paragraph (facilitator)
+- **Testing Results**:
+  - ✅ 391 paragraphs loaded from `rdg_thai.json` in ~3 seconds
+  - ✅ Paragraph update and correction workflow validated
+  - ✅ Session save-back to JSON verified with metadata preserved
+  - ✅ End-to-end workflow tested successfully
+- **Git**: Committed as Stage 2.5.0, tagged `v2.5.0-translation-phase2`
+- **Status**: Backend complete and tested, ready for frontend implementation
+
+**Phase 3: Basic UI** 📋 **NEXT** (No Video, No Auth)
+- `EnglishTextDisplay.vue`: Display `text` field (read-only)
+- `AITranslationDisplay.vue`: Display `<language>_text` (read-only)
+- `CorrectedTextEditor.vue`: Editable textarea for `corrected_<language>_text` + Save button
+- `DocumentNavigator.vue`: Chapter/paragraph navigation from JSON structure
+- `TranslationCircle.vue`: Wire up all 4 components, fetch from API
+- **Test**: Navigate paragraphs, edit text, save, reload to verify persistence
+
+**Phase 4: Circle Integration** (Auth & Membership)
+- Add `circle_type = 'translation'` support to base Circle model
+- Associate JSON file with circle
+- Enforce circle membership for API access
+- Link corrections to user who made them (audit trail)
+- Add route: `/circles/:circleId/translation` (requires auth)
+- Use existing auth/circle context in frontend
+- **Test**: Login with key, join translation circle, edit document
+
+**Phase 5: Video Integration** (Jitsi Collaboration)
+- Add `JitsiWin1` component to `TranslationCircle.vue` layout
+- Adjust 4-window layout to accommodate video panel
+- Use existing Jitsi/JaaS integration
+- Generate Jitsi room name for translation circles
+- **Test**: Multiple users in same translation circle, video + editing simultaneously
+
+**Phase 6: Facilitator Controls** (Document & Language Selection)
+- API endpoint: Upload/select JSON file for circle
+- Store circle settings: `target_language`, `source_file`
+- Facilitator UI: File upload/selection interface
+- Language selector (thai, vietnamese, korean, japanese, chinese, tibetan)
+- Dynamically show correct `<lang>_text` fields based on selection
+- **Test**: Facilitator selects different languages and documents
+
+**Phase 7: Real-time Collaboration** (Paragraph-Level Locking)
+
+**Goal**: Enable multiple users to collaborate on document editing with simple conflict prevention through paragraph-level locking.
+
+**Backend Tasks**:
+- WebSocket consumer for translation lock/unlock/update events
+- Broadcast paragraph lock/unlock events to all circle members
+- Track active locks per paragraph (user_id, timestamp)
+- Auto-release locks on timeout (configurable, default 60 seconds)
+- Store lock timeout setting in Circle model: `edit_lock_timeout_seconds`
+- Enforce one-edit-per-user: Check if user already holds a lock before granting new one
+
+**Frontend Tasks**:
+- WebSocket listener for lock events
+- UI states per paragraph:
+  - **Available**: `[Edit]` button enabled
+  - **I'm editing**: `[Save] [Cancel]` buttons + editable textarea
+  - **Locked by other**: `[Edit]` button disabled + "Joe is editing..." indicator
+  - **Just saved**: `[Edit]` button enabled + updated text
+- Disable all other `[Edit]` buttons when user is editing any paragraph
+- Show message if user tries to edit another paragraph: "Please save or cancel your edit"
+- Success feedback: "Saved!" (green message, fades out)
+- Error feedback: "Save failed" (red message)
+
+**Collaboration Strategy**:
+- **Paragraph independence**: Joe edits p9-1, Jill edits p9-2 simultaneously - no conflict
+- **Single lock per paragraph**: Only one user can edit a specific paragraph at a time
+- **Explicit controls**: `[Edit]` button locks, `[Save]` or `[Cancel]` unlocks
+- **Conflict resolution**: First-to-backend wins (server processes first request)
+- **Race conditions**: Second user gets error: "This paragraph is already being edited by Joe"
+- **Join mid-session**: Every `[Edit]` click checks backend for current lock state
+- **Disconnection handling**: Rely on timeout (60s default); future enhancement: detect disconnect
+
+**Facilitator Controls**:
+- Facilitator can force-unlock any paragraph (override stuck locks)
+- Useful when user's browser crashes or they walk away
+
+**WebSocket Events**:
+```
+PARAGRAPH_LOCK_ACQUIRED   # User clicks Edit, backend grants lock
+PARAGRAPH_LOCK_RELEASED   # User clicks Save/Cancel, or timeout expires
+PARAGRAPH_UPDATED         # Broadcast saved text to all users
+PARAGRAPH_LOCK_FAILED     # Lock request denied (already locked)
+```
+
+**Test**:
+- Two users editing different paragraphs simultaneously (should work)
+- Two users attempting to edit same paragraph (second should be blocked)
+- User disconnects while holding lock (should auto-release after timeout)
+- Facilitator force-unlock feature
+- User tries to edit multiple paragraphs (should be prevented with message)
+
+### Milestone Summary
+
+**Current Progress**: ✅ Phases 1-2 Complete (Backend foundation + API tested)
+**MVP (Minimum Viable Product)**: Phases 1-4 (editing + circle integration, no video)
+**Full Feature Set**: Phases 1-6 (includes video + facilitator controls)
+**Advanced Feature Set**: Phase 7 (real-time collaborative editing)
+
+### Scope Validation
+Translation circles meet Stage 2 criteria:
+- ✅ **Frontend**: Vue components using existing libraries
+- ✅ **Backend**: Django REST APIs for JSON handling and text storage
+- ✅ **No new infrastructure**: Uses existing Caddy/Docker/Compose setup
+- ✅ **No new authentication**: Leverages existing key-based access
+- ✅ **Progressive enhancement**: Builds on Stage 2.1-2.4 foundation
+- ✅ **No new services**: Uses existing Jitsi external service
+
+### Future Circle Types
+The circle types architecture enables future additions:
+- **Discussion Circles**: Standard video meetings with reactions and airtime (current default)
+- **Study Circles**: Synchronized reading with annotations and Q&A
+- **Workshop Circles**: Structured activities with facilitator-guided exercises
+- **Research Circles**: Collaborative analysis with document annotation
+
+Each new circle type follows same pattern:
+1. Create `circles/<type>/` backend module
+2. Create `components/circles/<type>/` frontend components
+3. Create `views/<TypeName>Circle.vue` route view
+4. Add circle type to base Circle model choices
+5. Implement type-specific features while sharing core infrastructure
+
+---
+
+## Documentation Standards
+
+### Version Strategy
+- **Major versions** (2.1, 2.2, 2.3): Significant feature additions or architectural changes
+- **Micro versions** (2.2.1, 2.2.2): Incremental enhancements within same feature set
+- **Git workflow**: Micro versions committed frequently on WSL, major versions tagged for deployment
+- **Deployment cadence**: Multiple WSL commits per deployment stage, optional tagging for micro versions
+
+### Document Stage Labels
+1. **Notes (N)** – Freeform ideas and early discussion  
+2. **Draft (D)** – Structured outline, still changing  
+3. **Accepted (A)** – Agreed version to follow  
+4. **Completed (C)** – Final state after task success  
+5. **Archived (AR)** – Preserved for reference, no longer active  
+
+### Timestamp Rule
+Every doc includes a **timestamp (date + hour:minute, TZ)** at the top.  
+The **latest timestamp is always authoritative**, regardless of stage label.  
+
+### Superseded Mark
+Older versions must be marked explicitly, e.g.:  
+<!-- InquiryCircle2 – ProjectSpec – Stage2 – 9/1/2025 at 11:45 AM ET (superseded) -->
+
+## Guiding Principles
+- **Container Single-Purpose**: Separate frontend, backend, and gateway.  
+- **Configuration as Code**: Compose files and configs are version-controlled.  
+- **Environment Parity**: Dev and prod share the same topology.  
+- **Security First**: Private networks, TLS everywhere, key-based access.  
+- **Operational Simplicity**: Standard Docker patterns, clear logging, easy rollback.
+
+---
+
+**Related Documentation**:
+[operations-guide](./operations-guide.md) | [infrastructure](./infrastructure.md) | [README](./README.md) | [CHANGELOG](./CHANGELOG.md)
+
+**Document Version**: v2.5.0-circle-types | **Last Updated**: 10/26/2025 | **Status**: ✅ Current
+---
+
+[0;32m✅[0m Loading current status...
+<!-- InquiryCircle2 – STATUS – Stage2.5 – 10/26/2025 at 12:15 PM ET -->
+
+# Project Status
+
+## AI Session Context - Current State
+- **Stage**: Stage 2.5.0 - Circle Types Architecture & Translation Circle Foundation
+  - **Last Updated**: October 26, 2025 at 12:15 PM ET
+  - **System Health**: ✅ Phase 1 Complete - Folder Structure & Stubs Created
+
+
+### Test Credentials (Current)
+- **Facilitator Key**: `facilitator-key-123`
+- **Participant Key**: `participant-key-456`
+- **Storage**: Secrets kept in Bitwarden secure note
+
+### Known Issues/Blockers
+- **Production Database Keys**: Need to add test keys to production database
+- ~~**PDF Viewer Incomplete**: Not meeting all Stage 2.2 requirements~~ → ✅ **Resolved**: Replaced with HTML Window Components
+- ~~**Facilitator PDF Selection**: Not yet implemented~~ → ✅ **Resolved**: Using ContentPanel architecture
+
+### Environment Status
+- **WSL Development**: ✅ Fully operational
+- **VPS Production**: ✅ Deployed and running (catbench.com)
+- **External Services**: Jitsi ✅ Operational
+
+---
+
+## Current Project Achievement Status
+
+### ✅ Stage 2.1 Complete - Minimal Viable System
+### ✅ Stage 2.2.2 Complete - HTML Window Components Layout Implementation
+
+#### Stage 2.2.2 Completed Components
+- ✅ **Display Element Architecture**: 9-element composition verified and documented
+- ✅ **Layout Restructure**: test-video-integration route completely reorganized
+- ✅ **Top Row Implementation**: TitleBlock + StatusWin1 (compact) + TopMenu1
+- ✅ **Middle Row Implementation**: JitsiWin1 (2/3 width) + ContentPanel1 (1/3 width, 50vh height)
+- ✅ **Bottom Row Implementation**: ContentPanel2 (full width, 800px height)
+- ✅ **Component Cleanup**: Removed debug elements from HtmlWin1 and HtmlWin2
+- ✅ **Widget Removal**: Eliminated Bar1, Widget1, Widget2 from current route
+- ✅ **HTML Content Integration**: Pure HTML display in ContentPanel1 (ring14web.html) and ContentPanel2 (basic1.html)
+- ✅ **Docker Deployment**: Full layout changes deployed to both WSL dev and Docker containers
+
+#### Architecture Achievements
+- ✅ **Screenshot Analysis**: Identified and mapped all 9 display elements from visual evidence
+- ✅ **Project Spec Update**: Complete display element documentation with composition patterns
+- ✅ **Clean Component Design**: Content panels now display pure HTML without debugging interfaces
+
+#### Phase 1: Django Backend Setup
+- ✅ Django project with REST framework initialized
+- ✅ Data models created (Circles, Keys/Auth, Messages, Sessions)
+- ✅ Key-based authentication system implemented
+- ✅ REST API endpoints built and tested
+- ✅ SQLite database and migrations configured
+- ✅ API endpoints tested independently
+
+#### Phase 2: Docker Configuration
+- ✅ Django backend Dockerfile created
+- ✅ docker-compose.dev.yml built for development
+- ✅ Container networking and volumes configured
+- ✅ Backend container deployment tested
+- ✅ SQLite persistence verified across restarts
+
+#### Phase 3: Vue 3 Frontend
+- ✅ Vue 3 project initialized with Vite
+- ✅ Tailwind CSS and PostCSS configured
+- ✅ Jitsi Meet SDK integrated
+- ✅ API client for backend communication implemented
+- ✅ Key-based authentication UI built
+- ✅ Circle management interface created
+- ✅ Video conferencing components developed
+- ✅ Frontend tested against containerized backend
+
+#### Phase 4: Integration & Deployment
+- ✅ Caddy reverse proxy routing configured
+- ✅ Full stack tested locally with Docker Compose
+- 🚧 External Jitsi room management in process
+- ✅ End-to-end authentication and session flow tested
+- ✅ Production verification and monitoring setup completed
+
+#### Stage 2.2.1: PDF Viewer Feature Status (Legacy - Superseded by 2.2.2)
+- ~~✅ Basic PDF.js integration with Vue 3 frontend~~ → **Replaced by HTML Window Components**
+- ~~🚧 Incomplete DirectPdfViewer component~~ → **Superseded by ContentPanel architecture**
+- ✅ Static file serving through Docker container (retained for HTML content)
+- ~~🚧 Layout optimization requires refinement~~ → **✅ Completed in 2.2.2 layout restructure**
+- ~~🚧 PDF navigation and controls not fully implemented~~ → **Replaced by HTML content display**
+- ✅ Static files available: ring14web.html, basic1.html, ada3.css
+- ~~🚧 Video conference and PDF viewer integration incomplete~~ → **✅ Completed: JitsiWin1 + ContentPanel integration**
+
+---
+
+## Next Actions & Future Planning
+
+ ### Stage 2.2.2 Architecture Foundation (✅ Completed)
+  1. ✅ **Display Component Architecture**: Defined three-layer model in project-spec.md
+     - Route Level: URL paths define user experiences
+     - Display Component Level: Vue components orchestrate elements
+     - Display Element Level: Reusable panels (htmlwin1, htmlwin2, etc.)
+  2. ✅ **Capability Framework**: Documented optional capabilities for future enhancement
+  3. ✅ **Composition Patterns**: Established rules for element reuse across routes
+
+ ### Stage 2.2.2 Visual Documentation (✅ Completed)
+  1. ✅ **Screenshot Analysis**: Analyzed labeled screenshot of test-video-integration route
+  2. ✅ **Element Identification**: Mapped all 9 display elements from visual evidence
+  3. ✅ **Architecture Validation**: Confirmed 3-row, 9-element composition structure
+  4. ✅ **Project Spec Update**: Updated project-spec.md with verified display elements
+  5. ✅ **Layout Implementation**: Translated visual analysis into working code
+
+ ### Stage 2.2.2 Layout Implementation (✅ Completed)
+  1. ✅ **Top Row Restructure**: TitleBlock + StatusWin1 + TopMenu1 layout
+  2. ✅ **Middle Row Optimization**: JitsiWin1 (2/3) + ContentPanel1 (1/3, 50vh) side-by-side
+  3. ✅ **Bottom Row Simplification**: ContentPanel2 full-width (800px height)
+  4. ✅ **Component Cleanup**: Removed debug elements from HTML window components
+  5. ✅ **Widget Elimination**: Removed Bar1, Widget1, Widget2 from route composition
+  6. ✅ **HTML Integration**: Pure HTML content display in both content panels
+  7. ✅ **Docker Deployment**: Successfully deployed changes to both dev and container environments
+
+
+### Stage 2.3.0 - Route Restructure (✅ Completed - 9/30/2025)
+
+#### New Routes
+  - **`/meeting`**: Standard meeting interface with video conferencing and content panels
+  - **`/facmeet`**: Facilitator's meeting interface will have some extra features
+  - **`/administration`**: for creation and mangement of facilitators and Circles
+  - **`/tests`**: System health checks and component testing
+  - **`/facpanel`**: Facilitator control panel with navigation to /facmeet
+#### Routes Removed
+  - **`/dashboard`**: Merged into /administration
+  - **`/circles`**: Merged into /administration
+  - **`/test-video-integration`**: Renamed to /meeting
+  
+### Stage 2.3.1 - TopBar (✅ Completed - 9/30/2025)
+- TopBar1 component (topbar1) with NavMenu1 and StatusBar1
+  - NavMenu1 navigation menu with all route links
+  - StatusBar1 showing username, user role, and circle name
+  - useTopBar composable for global state management
+  - Simplified /facmeet page header
+  - Applied TopBar globally to all pages via App.vue
+
+### Stage 2.3.2 - Simplified Video Conferencing (✅ Completed - 9/30/2025)
+- Removed backend room management integration
+- Direct public Jitsi server embed (meet.jit.si)
+- Simple static room names: InquiryCircleDemo{circleId}
+- No authentication layer (facilitator must start room at meet.jit.si first)
+- **Known Limitations**:
+  - Public meet.jit.si has 5-minute embed limit
+  - Requires authentication to start rooms (but not to join)
+  - Development/demo configuration only
+  - Production requires self-hosted Jitsi (Stage 3)
+
+### Stage 2.3.3   (✅ Completed - 10/1/2025)
+updated /meetings  
+and /facpanel 
+  
+### Stage 2.3.4   (✅ Completed - 10/4/2025)
+ -Examine the  Element Mapping Table in project-spec       
+DescBar1 (Vue Component)
+  ├─ Positioned: Below reaction1/reaction2
+  ├─ Always visible: Yes (empty state shows prompt)
+  ├─ Displays: Single element description that incudes a heard with th label and ID and a description of its function
+  └─ Updates: On click of included elements 
+  
+  
+important detail can be found here   
+[2025-09-22-jitsi-api-python](https://github.com/scott009/docs-websystems/tree/main/discussion/2025-09-22-jitsi-api-python)
+#### Included elements  
+ Reaction1 buttons (12 items):
+  - like1, love1, dislike1, hate1, agree1, disagree1, hurryup1, goon1, interest1, boring1, sympathy1, laugh1
+
+  Reaction2 buttons (12 items):
+  - like_l1, love_l1, dislike_l1, hate_l1, agreel1, disagree_l1, hurryup_l1, goon_l1, interest_l1, boring_l1, sympathy_l1, laugh_l1
+  (note  that these are actually just labels but i want them to be clickable in the context of this task
+  
+  Reaction options (6 items):
+  - ropt1, ropt2, ropt3, rch1, rch2, rch3
+
+#### Excluded elements
+  TopBar elements (per your note "include items in topbar1"):
+  - username, userrole, circname, logout1
+
+  Non-clickable Containers (excluded):
+  - topbar1, reaction1, reaction2, navmenu1, statbar1, jitsiwin1, mainarea
+  
+#### Visual Styling  
+- make it distinct from Reaction bars. for now give it a light buff collored backgroun with a 1 pixel black border
+-  Give it the same hiegh as the reaction bar and about a third of the screen width
+  
+##### Visibility  
+make it visable to everyone for now.  later on i want the admin to be able to set its visibility per circle
+
+Do not do anything yet  lets discuss first
+
+#### Use Cases
+All of these down the line.    The immedite use case is for me (dev ) to examine the system and explorer the conversation and control elements
+  - End Users: To learn about interface elements during a meeting?
+  - Facilitators: To understand controls they have available?
+  - Developers: As documentation/debugging tool?
+  - Training: As an onboarding/help system?
+#### remaining
+  Option 2 - Manually edit JSON:
+  # Edit the JSON directly
+  nano /home/scott/inquirycircle/frontend/public/data/element-descriptions.json
+  # Then rebuild frontend container
+
+### Stage 2.4.1  (✅ Completed - 10/10/2025)
+ - Integrated your 8x8.vc JaaS account (25 concurrent users)
+  - Frontend updated to use JaaS domain and app ID
+  - Backend JaaS config endpoint created
+  - Multi-user video conferencing tested and working
+  - Screen sharing functional
+  - dominantSpeakerChanged event handler ready for airtime tracking
+
+### Stage 2.4.2  (✅ Completed - 10/12/2025)
+ - ✅ Backend authentication endpoint now returns circle information
+ - ✅ Frontend auth store saves and persists user's circle data
+ - ✅ `/meeting` route uses authenticated user's circle for JaaS room
+ - ✅ `/facmeet` route uses authenticated facilitator's circle for JaaS room
+ - ✅ Both facilitator and participants join the same JaaS conference based on their shared circle
+ - ✅ Database configured with test data: facilitator-key-123 and participant-key-456 both in "sadf" circle (ID: 6, Jitsi: ic-032ce8c6)
+ - ✅ API endpoint returns: `{"valid": true, "role": "...", "key_id": N, "circle": {"id": 6, "name": "sadf", "jitsi_room_id": "ic-032ce8c6"}}`
+ - ✅ No more mock static circle IDs - all rooms use real authenticated circle data
+ - ✅ Routes redirect to login if not authenticated
+ - ✅ Error handling for users without assigned circles
+ 
+### Stage 2.4.3    (✅ Completed - 10/15/2025)
+
+#### / route  
+ the login interface should be placed on the / route   
+   
+##### display element  for /  and /welcome 
+update project spec to add this display element   
+  displaytext1	dtxt1  no parent  This will be in a vue template 
+ 
+
+  An Inquiry Circle is a place to come together in honest, respectful conversation.
+
+ Each Circle is a small online meeting room where people take turns sharing and listening around a common question or theme. We offer meeting facilitators a flexible set of  tools to shape the meeting environment—helping them create the kind of space that best fits their group’s needs.
+
+ Inquiry Circles began in small Buddhist-based recovery communities where people met to talk honestly about change, suffering, and growth. Those conversations shaped  the focus on mindful listening and shared understanding, but the approach is open to anyone who values honest dialogue and mutual respect.
+  
+#### /Welcome     
+Create a new route  called /welcome  
+On successful login the participant should see a go to your meeting link for now  
+A facilitator should see a the same page with the links to the   /facpanel and /facmeet
+The link should be prominently displyed and say Facilitators home page   
+  
+/Welcome will also display   displaytext1  no matter who logged in   
+
+### Stage 2.4.4 (🚧 Deferred)
+- /facilitator  viewpoint  everything is this stage involves the facilitators perspective
+
+#### /welcome
+once the facilitator is logged in The welcome page displays
+A list of their circles
+Each circle listing has 2 links
+a link to /facmeet for the  the selected circle
+a link to /facpanel for the selected panel
+
+there is also a create new circle button
+
+---
+
+## Stage 2.5.0 - Circle Types Architecture & Translation Circle Foundation (✅ Phase 1 Complete - 10/26/2025)
+
+### Circle Types Architecture
+- ✅ **Documentation Updated**: project-spec.md now includes Circle Types Architecture section
+- ✅ **Folder Structure Design**: Symmetric backend/frontend structure defined
+- ✅ **Naming Consistency**: `circles/<type>/` pattern on both backend and frontend
+- ✅ **Display Element Integration**: 4 translation elements added to Element Mapping Table
+  - `engtxt1`: English Text Display (NF - not yet implemented)
+  - `aitrans1`: AI Translation Display (NF - not yet implemented)
+  - `corrected1`: Corrected Text Editor (NF - not yet implemented)
+  - `docnav1`: Document Navigator (NF - not yet implemented)
+
+### Translation Circle - Phase 1: Folder Structure & Stubs
+**Backend Structure Created** (`/backend/circles/translation/`):
+- ✅ `__init__.py` - Module initialization with documentation
+- ✅ `models.py` - Stub for TranslationDocument and ParagraphCorrection models
+- ✅ `views.py` - Stub for REST API endpoints
+- ✅ `serializers.py` - Stub for DRF serializers
+- ✅ `services.py` - Stub for JSON handling business logic
+- ✅ `README.md` - Backend documentation
+
+**Frontend Components Created** (`/frontend/src/components/circles/translation/`):
+- ✅ `EnglishTextDisplay.vue` - Stub component for English source text (engtxt1)
+- ✅ `AITranslationDisplay.vue` - Stub component for AI translation (aitrans1)
+- ✅ `CorrectedTextEditor.vue` - Stub component with textarea and Save button (corrected1)
+- ✅ `DocumentNavigator.vue` - Stub component for JSON navigation (docnav1)
+- ✅ `README.md` - Component documentation
+
+**Frontend View Created** (`/frontend/src/views/`):
+- ✅ `TranslationCircle.vue` - Main route view with placeholder grid layout
+
+**Testing & Verification**:
+- ✅ Existing functionality tested - no damage to current system
+- ✅ Files created but not imported/registered (zero impact on production)
+- ✅ All routes continue to function normally (`/`, `/welcome`, `/meeting`, `/facmeet`)
+- ✅ No database migrations required
+- ✅ No router conflicts
+
+**Documentation Updates**:
+- ✅ `project-spec.md` updated to v2.5.0-circle-types
+- ✅ `README.md` updated to reflect circle types and translation focus
+- ✅ 7-Phase Translation Circle roadmap documented
+- ✅ JSON document structure from rdg_en_v3.json specified
+
+### Translation Circle - Next Phases ()
+**Phase 2: JSON Data Layer** (✅  Complete - 10/27/2025)
+- Django models for TranslationDocument and ParagraphCorrection
+- JSON file loader service
+- REST API endpoints for loading and saving corrections
+
+
+
+
+**Phase 3: Basic UI** (✅ Complete - 10/28/2025)
+- Implement the 4 Vue components with actual functionality
+- Wire up API calls
+- Test editing and persistence without auth
+
+**Phase 4: Circle Integration** (✅ Complete - 10/28/2025)
+- Add `circle_type = 'translation'` to Circle model
+- Enforce circle membership
+- Add authentication to translation route
+
+**Phase 5: Video Integration** (✅ Complete - 11/2/2025)
+- Add Jitsi to TranslationCircle layout
+- Test collaborative editing with video
+
+**Phase 6: Facilitator Controls**
+- Document/language selection UI
+- File upload capability
+
+**Phase 7: Real-time Collaboration** (ASpcification completed)
+See project-spce  
+- WebSocket-based live editing
+- Conflict resolution
+
+---
+
+**Related Documentation**:
+[status-template](./status-template.md) | [operations-guide](./operations-guide.md) | [CHANGELOG](./CHANGELOG.md)
+
+**Status Version**: v2.5.0-circle-types | **Last Updated**: 10/26/2025 | **Next Phase**: Stage 2.5.0 Phase 2 - JSON Data Layer
+---
+
+[0;32m✅[0m Loading operations guide...
+
+<!-- InquiryCircle2 – OperationsGuide – Stage2 – 9/12/2025 at 8:45 AM ET -->
+
+# Operations Guide
+
+## Purpose
+Define *how* to build, test, deploy, and operate InquiryCircle in Stage 2.  
+This document is procedural: it captures development workflows, deployment steps, guardrails, and troubleshooting. Strategic constraints and architecture live in ProjectSpec.md.
+
+---
+
+## AI Assistant Instructions (Deploy-as-Commit Pattern)
+
+### AI Context Loading Protocol
+**Model Hint: Claude Haiku** ✨ *Simple session initialization for new AI models*
+
+When starting a new AI session (especially when switching models):
+```bash
+# Run the context loader to bring AI up to speed
+/home/scott/inquirycircle/context-loader.sh  
+  
+Test Credentials (Current)
+- **Facilitator Key**: `facilitator-key-123`
+- **Participant Key**: `participant-key-456`
+- **Storage**: Secrets kept in Bitwarden secure note
+```
+
+This script loads all canonical documentation from DOCS-ENV:
+- **project-spec.md** - Architecture and constraints
+- **STATUS.md** - Current progress and priorities
+- **operations-guide.md** - Procedures and commands
+-  **operations-guide2.md** - Procedures and commands
+- **infrastructure.md** - Environment setup
+- **CHANGELOG.md** - Documentation evolution
+
+### Daily Session Startup Protocol
+**Model Hint: Claude Haiku** ✨ *Simple session initialization tasks*
+
+When continuing work in an existing session:
+1. **Check current STATUS.md** - review latest progress and tasks
+2. **Execute health checks** - verify system state before proceeding
+3. **Capture evidence** - logs, outputs, screenshots at each step
+
+For new sessions, use the AI Context Loading Protocol above first.
+
+### Deployment Pattern (Incremental & Safe)
+**Model Hint: Claude Sonnet 4** 🧠 *Deployment requires risk assessment, decision-making, and rollback readiness*
+
+When deploying changes:
+1. **Pre-deployment verification**:
+   ```bash
+   curl https://localhost/api/health/ -k      # Verify local health
+   docker-compose ps                          # Check container status  
+   git status                                 # Verify clean working tree
+   ```
+
+2. **Incremental deployment steps**:
+   - Apply one change at a time
+   - Test each change before proceeding  
+   - Capture evidence of success/failure
+   - Be ready to rollback at any step
+
+3. **Post-deployment verification**:
+   ```bash
+   curl https://catbench.com/api/health/      # Verify production health
+   docker-compose logs --tail=20 caddy       # Check for errors
+   docker-compose logs --tail=20 backend     # Check application logs
+   ```
+
+4. **Rollback triggers** (execute immediately if detected):
+   - Health check returns non-200 status
+   - Critical error in application logs
+   - Any 5xx errors in production
+   - Container restart loops
+
+### AI Evidence Requirements
+**Model Hint: Claude Haiku** ✨ *Documentation and evidence capture*
+
+Always provide evidence for:
+- Command outputs (especially curl responses)
+- Container status (`docker-compose ps` output)  
+- Log snippets when troubleshooting
+- Before/after comparisons for changes
+- Health check results at each deployment step
+
+### AI Error Response Protocol  
+**Model Hint: Claude Sonnet 4** 🧠 *Error analysis and recovery decisions require advanced reasoning*
+
+When encountering errors:
+1. **Stop immediately** - don't proceed with additional changes
+2. **Capture full error details** - logs, error messages, stack traces
+3. **Reference troubleshooting tables** - find matching error pattern
+4. **Execute diagnostic commands** - gather more information
+5. **Propose rollback if uncertain** - safety first approach
+
+### STATUS.md Integration Points
+The AI should check STATUS.md for:
+- **Current project version/phase** - determines active procedures
+- **Recent changes** - what was last modified or deployed
+- **Known issues** - existing problems to be aware of
+- **Test keys** - current authentication credentials
+- **Next tasks** - what needs to be accomplished
+
+### AI Frontend Change Deployment Protocol
+**Model Hint: Claude Sonnet 4** 🧠 *Frontend changes require containerized build workflow*
+
+**Critical Understanding**: The frontend is containerized and served through Docker/nginx. Vue component changes do NOT appear in the browser until the Docker container is rebuilt.
+
+**Required Steps for ANY Frontend Change**:
+1. **Build the Vue frontend locally**:
+   ```bash
+   cd /home/scott/inquirycircle/frontend && npm run build
+   ```
+
+2. **Rebuild the frontend Docker container**:
+   ```bash
+   cd /home/scott/inquirycircle/compose
+   docker-compose -f docker-compose.dev.yml up -d --build frontend
+   ```
+
+3. **Verify deployment**:
+   ```bash
+   # Check new build files exist
+   docker exec ic-frontend ls -la /usr/share/nginx/html/assets/
+
+   # Verify component is in bundle (replace ComponentName)
+   docker exec ic-frontend grep -o "ComponentName" /usr/share/nginx/html/assets/[bundle-name].js
+   ```
+
+**When to Use This Protocol**:
+- Creating new Vue components
+- Editing existing Vue components
+- Changing styles in Vue files
+- Modifying Vue templates
+- Any change to `/home/scott/inquirycircle/frontend/src/`
+
+**User Instruction**: After deployment, user must hard refresh browser (Ctrl+Shift+R or Cmd+Shift+R) to bypass cache.
+
+**Common Mistake**: Running only `npm run build` without rebuilding the container. The container serves files from its internal `/usr/share/nginx/html/` directory, not from the local `dist/` folder.
+
+### AI Documentation Commit Protocol (docs-env)
+  **Model Hint: Claude Haiku** ✨ *Simple documentation maintenance tasks*
+  When working in the docs-env environment to commit documentation changes:
+
+#### Environment Verification
+We are now working in the DOCS-ENV environment  
+The Remote repo when working in the DOCS-ENV environment is     https://github.com/scott009/docs-websystems
+
+  1. Navigate to docs-env directory:
+  cd /mnt/c/Users/scott/Documents/AIProjects/Markdown/docs-websystems/projects/inquirycircle
+  2. Check git status:    git status
+  3. Add documentation files:   # For STATUS.md updates
+  git add Documentation/STATUS.md
+
+  # For other documentation files:
+  git add Documentation/[filename].md
+  4. Commit with standard format:
+  git commit -m "$(cat <<'EOF'
+  [Brief description of changes]
+  EOF
+  )"
+
+  5. Push to repository:
+  git push origin main
+
+  Common Documentation Files
+
+  - Documentation/STATUS.md - Project status and progress
+  - Documentation/project-spec.md - Architecture and constraints
+  - Documentation/operations-guide.md - Procedures and workflows
+  - Documentation/infrastructure.md - Environment setup
+  - Documentation/CHANGELOG.md - Documentation evolution
+
+  Sample Commit Messages
+  - "Update STATUS.md for Stage X.X.X: [brief feature description]"
+  - "Add new documentation for [feature/component name]"
+  - "Revise project specifications for [specific change]"
+  - "Update operations guide with [new procedure/protocol]"
+  Error Handling
+  - If git commands fail, verify location with pwd
+  - Use ls Documentation/ to confirm files exist
+  - Check git repository status if push fails
+
+
+---
+
+## Development Guardrails
+- Operate only in **bash** on WSL and VPS (no PowerShell).
+- All VPS actions are done by the operator over SSH. AI may suggest commands, but must not assume execution access
+- When creating files, use `echo "..." > filename` for the first line and
+  `echo "..." >> filename` for subsequent lines (instead of heredocs).
+- Keep filesystem locations as documented in Infrastructure.md.
+- Proceed incrementally: verify each step before moving forward.
+- Be rollback-ready at all times (retain prior configs and builds).
+- Capture evidence: logs, health checks, curl outputs, screenshots.
+- Use test keys in development; production keys stored securely in `/etc/inquirycircle/env`.
+- **NEVER mark stages as complete in STATUS.md** - Always wait for explicit user confirmation before marking any stage, micro-version, or task as completed. The user will review implementation and confirm completion status.
+
+---
+
+## Command Reference (Complete)
+
+### Development Environment Commands
+**Model Hint: Claude Haiku** ✨ *Simple navigation and startup commands*
+
+```bash
+# Project Navigation
+cd /home/scott/inquirycircle                 # Project root (WSL)
+cd frontend && npm run dev                   # Frontend dev server (localhost:5173)
+cd backend && source venv/bin/activate      # Activate Python environment
+cd backend && python manage.py runserver    # Backend dev server (localhost:8000)
+
+# Frontend Operations
+npm install                                  # Install dependencies
+npm run build                               # Build for production
+npm run test:unit                           # Run unit tests
+npm run test:e2e                            # Run end-to-end tests
+cp -r dist/* ../caddy/site/                 # Deploy built assets
+
+# Backend Operations
+pip install -r requirements.txt             # Install Python dependencies
+python manage.py migrate                    # Run database migrations
+python manage.py makemigrations            # Create new migrations
+python manage.py test                      # Run Django tests
+python manage.py shell                     # Django shell
+python manage.py collectstatic --noinput   # Collect static files
+
+# Docker Operations (Development)
+cd compose                                  # Navigate to compose directory
+docker-compose -f docker-compose.dev.yml up -d     # Start all services (detached)
+docker-compose -f docker-compose.dev.yml down      # Stop all services
+docker-compose -f docker-compose.dev.yml restart [service]  # Restart specific service
+docker-compose logs -f [service]           # Follow logs for service
+docker-compose ps                          # Show service status
+docker stats                               # Show resource usage
+
+# Container Management
+docker exec -it [container_name] /bin/bash # Enter container shell
+docker system prune -f                     # Clean up unused resources
+docker images                              # List images
+docker volume ls                           # List volumes
+```
+
+### Frontend Development Workflow
+**Required for ALL Frontend Changes**
+
+The frontend is containerized and served through Docker/nginx. Changes to Vue components require a complete build-and-deploy cycle to appear in the browser.
+
+**Standard Workflow**:
+```bash
+# 1. Build the Vue frontend
+cd /home/scott/inquirycircle/frontend
+npm run build
+
+# 2. Rebuild and restart the frontend container
+cd /home/scott/inquirycircle/compose
+docker-compose -f docker-compose.dev.yml up -d --build frontend
+
+# 3. Verify deployment
+docker exec ic-frontend ls -la /usr/share/nginx/html/assets/  # Check timestamps
+docker-compose -f docker-compose.dev.yml ps                   # Verify container running
+
+# 4. Clear browser cache and hard refresh
+# Ctrl+Shift+R (Windows/Linux) or Cmd+Shift+R (Mac)
+```
+
+**When to Use This Workflow**:
+- Creating new Vue components
+- Editing existing Vue components
+- Changing styles in `.vue` files
+- Modifying Vue templates
+- Any change to `/home/scott/inquirycircle/frontend/src/`
+
+**Verification Tips**:
+```bash
+# Check if specific component is in bundle
+docker exec ic-frontend grep -o "ComponentName" /usr/share/nginx/html/assets/VideoTestDemo-*.js
+
+# View frontend container logs
+docker-compose -f docker-compose.dev.yml logs --tail=20 frontend
+```
+
+**Common Pitfalls**:
+- ❌ Running only `npm run build` → changes won't appear (container not updated)
+- ❌ Skipping browser cache clear → old version still visible
+- ❌ Checking too quickly → container may still be starting (wait 5-10 seconds)
+
+### Production Environment Commands  
+**Model Hint: Claude Sonnet 4** 🧠 *Production deployment requires careful evaluation and rollback readiness*
+
+```bash
+# VPS Access & Navigation
+ssh user@catbench.com                      # SSH to production server
+cd /srv/inquirycircle                      # Production project root
+
+# Deployment Operations
+git pull                                   # Update code from GitHub
+docker-compose down                        # Stop current services
+docker-compose up -d --build             # Build and start services
+docker-compose -f docker-compose.prod.yml up -d --build  # Production specific
+
+# Production Monitoring
+curl https://catbench.com/api/health/     # Health check (should return JSON)
+curl -I https://catbench.com              # Check HTTPS headers
+curl -f https://icircle.catbench.com      # Test specific subdomain
+docker-compose logs --tail=50 [service]   # View recent logs
+```
+
+### Health Check Commands
+**Model Hint: Claude Haiku** ✨ *Simple verification commands with predictable outputs*
+
+```bash
+# Quick Health Verification (Single Command)
+curl https://localhost/api/health/ -k && echo " ✅ Local OK" || echo " ❌ Local Failed"
+curl https://catbench.com/api/health/ && echo " ✅ Prod OK" || echo " ❌ Prod Failed"
+
+# Local Development Health Checks
+curl https://localhost/api/health/ -k      # Full stack through Caddy (HTTPS)
+curl http://localhost/api/health/          # Full stack through Caddy (HTTP)
+docker-compose ps | grep -v Exit           # Check all services running
+
+# Production Health Checks
+curl https://catbench.com/api/health/      # Production API health
+curl https://icircle.catbench.com/api/health/  # Subdomain health
+curl -f -s -o /dev/null https://catbench.com && echo "HTTPS OK" || echo "HTTPS FAIL"
+
+# Database Health Checks
+cd backend && python manage.py shell -c "from django.db import connection; cursor = connection.cursor(); cursor.execute('SELECT 1'); print('DB OK')"
+```
+
+### Emergency/Troubleshooting Commands
+**Model Hint: Claude Sonnet 4** 🧠 *Emergency situations require careful analysis and decision-making*
+
+```bash
+# Service Recovery
+docker-compose restart caddy              # Restart reverse proxy
+docker-compose restart backend            # Restart API server
+systemctl status docker                   # Check Docker daemon
+
+# Log Investigation
+docker-compose logs --tail=100 caddy      # Caddy access/error logs
+docker-compose logs --tail=100 backend    # Django application logs
+journalctl -u docker -f                   # Docker system logs
+
+# Quick Rollback
+git checkout HEAD~1                        # Rollback code to previous commit
+docker-compose down && docker-compose up -d  # Redeploy previous version
+
+# Resource Cleanup
+docker system prune -a -f                 # Clean all unused Docker resources
+docker volume prune -f                    # Clean unused volumes
+```
+
+---
+
+## Development Workflow
+
+### Environment Setup
+- **Frontend prerequisites**: Node.js 18+, npm.  
+- **Backend prerequisites**: Python 3.10+, Django, virtualenv.  
+- **Containers**: Docker + Docker Compose installed in WSL.  
+- **Git**: Configured for repo `scott009/InquiryCircle`.
+
+### Local Development Structure
+/home/scott/inquirycircle/
+├── compose/ # Docker compose configurations
+├── caddy/ # Reverse proxy configs and static site
+├── frontend/ # Vue 3 + Tailwind + Jitsi
+├── backend/ # Django REST API
+└── Documentation/
+
+yaml
+Copy code
+
+---
+
+## Complete Procedure Checklists
+
+### Frontend Development Checklist
+**Model Hint: Claude Haiku** ✨ *Routine setup and verification tasks*
+
+**Initial Setup**
+- [ ] Node.js 18+ installed
+- [ ] Navigate to `cd frontend`
+- [ ] Run `npm install` (verify no errors)
+- [ ] Verify `package.json` includes Vue 3, Tailwind, Jitsi SDK
+
+**Development Mode**
+- [ ] Run `npm run dev` → should show "Local: http://localhost:5173"
+- [ ] Open browser to http://localhost:5173
+- [ ] Verify hot-reload works (make a change, see it update)
+- [ ] Check browser console for errors (should be clean)
+
+**Build and Deploy Process**
+- [ ] Run `npm run build` (should complete without errors)  
+- [ ] Verify `dist/` directory created with files
+- [ ] Copy assets: `cp -r dist/* ../caddy/site/`
+- [ ] Verify files copied to caddy/site/ directory
+- [ ] Test production build at http://localhost:8080 (through Caddy)
+
+**Frontend Testing Checklist**  
+**Model Hint: Claude Sonnet 4** 🧠 *Complex integration testing requiring analysis of multiple systems*
+
+- [ ] Vue Router navigation works (test all routes)
+- [ ] Tailwind styles apply correctly (check responsive design)
+- [ ] Jitsi SDK loads without errors (check browser console)
+- [ ] API calls to backend succeed (test in Network tab)
+- [ ] Key-based authentication flow works (test valid/invalid keys)
+- [ ] Facilitator vs participant roles display correctly
+- [ ] Video conferencing interface loads
+- [ ] Facilitator messaging interface functions
+
+### Backend Development Checklist
+**Model Hint: Claude Haiku** ✨ *Standard Django setup procedures*
+
+**Initial Setup**
+- [ ] Python 3.10+ installed
+- [ ] Navigate to `cd backend`
+- [ ] Create virtual environment: `python -m venv venv`
+- [ ] Activate environment: `source venv/bin/activate`
+- [ ] Install dependencies: `pip install -r requirements.txt`
+- [ ] Verify no dependency conflicts
+
+**Development Mode**
+- [ ] Run migrations: `python manage.py migrate`
+- [ ] Check database file created: `ls -la db/inquirycircle.db`
+- [ ] Start server: `python manage.py runserver`
+- [ ] Verify server starts on http://localhost:8000
+- [ ] Check Django admin interface loads
+
+**API Testing Checklist**  
+**Model Hint: Claude Sonnet 4** 🧠 *API testing requires response analysis and error interpretation*
+
+- [ ] Health endpoint: `curl http://localhost:8000/api/health/` → JSON response
+- [ ] Auth endpoint with valid facilitator key → `{"valid": true, "role": "facilitator"}`
+- [ ] Auth endpoint with valid participant key → `{"valid": true, "role": "participant"}`  
+- [ ] Auth endpoint with invalid key → `{"valid": false, "error": "Invalid key"}`
+- [ ] Circle creation: POST to `/api/circles/` → creates circle
+- [ ] Circle retrieval: GET `/api/circles/` → returns circles list
+- [ ] Message creation: POST to `/api/messages/` → saves message
+- [ ] Message retrieval: GET `/api/messages/` → returns messages
+
+**Database Verification**
+- [ ] SQLite file exists: `ls -la backend/db/inquirycircle.db`
+- [ ] Migrations applied: `python manage.py showmigrations` (all [X])
+- [ ] Tables created: Check via Django shell
+- [ ] Test data persists across server restarts
+- [ ] Database connections work: Test via shell command
+
+### Docker Integration Checklist
+**Model Hint: Claude Sonnet 4** 🧠 *Multi-container integration requires system-level thinking*
+
+**Development Stack**
+- [ ] Navigate to `cd compose`
+- [ ] Environment file exists: check `.env` or `.env.example`
+- [ ] Run: `docker-compose -f docker-compose.dev.yml up -d`
+- [ ] Verify all containers start: `docker-compose ps` (all "Up")
+- [ ] Check container logs: `docker-compose logs` (no errors)
+- [ ] Test Caddy routing: http://localhost:8080 → frontend
+- [ ] Test API proxying: http://localhost:8080/api/health/ → backend JSON
+
+**Integration Verification**
+- [ ] Frontend loads through Caddy reverse proxy
+- [ ] API calls from frontend reach backend successfully  
+- [ ] Jitsi integration works through frontend
+- [ ] Authentication flow works end-to-end
+- [ ] Data persists across container restarts
+- [ ] All services communicate on Docker network
+- [ ] Volume mounts work correctly (database, static files)
+
+Integration via Docker Compose
+Start Full Stack (dev)
+
+
+cd compose
+docker-compose -f docker-compose.dev.yml up -d
+Verify
+
+Caddy serves frontend at http://localhost:8080
+
+API proxied at http://localhost:8080/api
+
+Jitsi sessions load (external service)
+
+Data persists across restarts
+
+Testing Procedures
+Frontend
+
+
+cd frontend
+npm run test:unit
+npm run test:e2e
+Backend
+
+
+cd backend
+python manage.py test
+Integration
+
+
+docker-compose -f docker-compose.dev.yml up
+npm run test:integration
+Deployment Procedures
+WSL Dry-Run
+
+
+docker-compose -f docker-compose.prod.yml up -d
+VPS Deployment
+
+
+ssh user@catbench.com
+cd /srv/inquirycircle
+git pull
+docker-compose down
+docker-compose up -d --build
+Verify
+
+
+curl https://catbench.com/api/health/
+## Troubleshooting Reference (Complete)
+
+**Model Hint: Claude Sonnet 4** 🧠 *All troubleshooting requires analysis, pattern recognition, and decision-making*
+
+### Network & Connectivity Issues
+| Error Pattern | Symptoms | Root Cause | Quick Fix | Deep Fix |
+|--------------|----------|------------|-----------|----------|
+| 502 Bad Gateway | Browser shows 502, Caddy can't reach backend | Backend container down/not responding | `docker-compose restart backend` | Check resource limits, backend logs |
+| 504 Gateway Timeout | Request hangs, then 504 error | Backend slow response or deadlock | `docker-compose restart backend` | Investigate database locks, optimize queries |
+| Connection Refused | `curl: (7) Failed to connect` | Service not running on expected port | `docker-compose ps` → `docker-compose up -d [service]` | Check port bindings in compose file |
+| No HTTPS | HTTPS fails, HTTP works | Caddy TLS issue, DNS problem | `docker-compose logs caddy` | Check DNS A records, firewall ports 80/443 |
+| DNS Resolution Fails | `nslookup` fails for domain | DNS configuration issue | Check A records at registrar | Wait for DNS propagation (up to 48h) |
+
+### Application-Level Issues  
+| Error Pattern | Symptoms | Root Cause | Quick Fix | Deep Fix |
+|--------------|----------|------------|-----------|----------|
+| Auth keys not working | 401/403 errors on API calls | Invalid key format or DB corruption | Check key format in STATUS.md | Verify database schema, reload test keys |
+| Jitsi not loading | Video interface blank/error | External Jitsi API issue or config | Check Jitsi service status | Verify API keys, check external dependencies |
+| API returns HTML not JSON | API endpoints return Django error pages | Django misconfiguration or crash | `docker-compose logs backend` | Check Django settings, database connection |
+| Frontend stale content | Changes not reflected in browser | Browser cache or build cache issue | Hard refresh (Ctrl+F5), rebuild frontend | `npm run build && cp -r dist/* ../caddy/site/` |
+| Database errors | 500 errors, "database locked" | SQLite file corruption or permissions | `docker-compose restart backend` | Check volume mounts, file permissions |
+
+### Container & Infrastructure Issues
+| Error Pattern | Symptoms | Root Cause | Quick Fix | Deep Fix |
+|--------------|----------|------------|-----------|----------|
+| Container won't start | `docker-compose ps` shows Exit status | Image build failure or resource limits | `docker-compose logs [service]` | Check Dockerfile, available memory/disk |
+| Volume mount issues | Database doesn't persist across restarts | Incorrect volume configuration | Check `docker-compose.yml` volume syntax | Verify host paths exist, check permissions |
+| Out of disk space | Containers fail to start, builds fail | Docker images/volumes consuming disk | `docker system prune -a -f` | Monitor disk usage, implement cleanup policies |
+| Memory issues | Containers randomly restart, slow performance | Insufficient memory allocation | `docker stats` to check usage | Increase WSL2 memory limit, optimize containers |
+| Port conflicts | "Port already in use" error | Another service using same port | `netstat -tulpn \| grep [port]` | Change port in compose file or stop conflicting service |
+
+### Development-Specific Issues
+| Error Pattern | Symptoms | Root Cause | Quick Fix | Deep Fix |
+|--------------|----------|------------|-----------|----------|
+| npm commands fail | Package install/build errors | Node version or dependency issues | `rm -rf node_modules && npm install` | Check Node version, update package.json |
+| Python/Django errors | Import errors, migration failures | Virtual environment or dependency issues | `source venv/bin/activate && pip install -r requirements.txt` | Recreate virtual environment |
+| Git sync issues | Merge conflicts, push failures | Repository state mismatch | `git status && git stash && git pull` | Resolve conflicts manually, force push if needed |
+| Build failures | Frontend/backend won't build | Missing dependencies or config errors | Check build logs for specific errors | Update dependencies, fix configuration files |
+
+### Production-Specific Issues  
+| Error Pattern | Symptoms | Root Cause | Quick Fix | Deep Fix |
+|--------------|----------|------------|-----------|----------|
+| TLS certificate issues | HTTPS warnings, expired cert errors | Caddy certificate renewal failed | `docker-compose restart caddy` | Check DNS, firewall, Caddy logs |
+| Resource exhaustion | Site slow/unresponsive, high load | VPS overloaded | `docker stats` → restart heavy containers | Scale VPS resources, optimize containers |
+| Security alerts | Failed auth attempts, unusual traffic | Brute force or bot attacks | Check access logs, block IPs | Implement rate limiting, security headers |
+
+### Diagnostic Commands by Issue Type
+**Model Hint: Claude Haiku** ✨ *Simple diagnostic commands with predictable outputs*
+
+```bash
+# Network Issues
+curl -v https://catbench.com/api/health/     # Full connection test
+nslookup catbench.com                        # DNS resolution test
+telnet catbench.com 443                      # Port connectivity test
+
+# Application Issues  
+docker-compose logs --tail=100 backend      # Backend application logs
+docker-compose logs --tail=100 caddy        # Reverse proxy logs
+curl -H "Authorization: Key facilitator-key-123" localhost:8080/api/auth/verify-key/
+
+# Container Issues
+docker system df                             # Disk usage by containers
+docker stats --no-stream                    # Memory/CPU usage snapshot
+docker-compose config                        # Validate compose file syntax
+
+# Database Issues
+cd backend && python manage.py shell -c "from django.db import connection; connection.ensure_connection()"
+ls -la backend/db/                           # Check database file permissions
+```
+
+## Rollback and Recovery Procedures (Complete)
+
+### Emergency Rollback (< 2 minutes)
+**Model Hint: Claude Sonnet 4** 🧠 *Critical production decisions require careful evaluation and speed*
+
+When production is down or critically broken:
+
+```bash
+# 1. Immediate service restoration (run on VPS)
+ssh user@catbench.com
+cd /srv/inquirycircle
+docker-compose down                          # Stop broken services
+git checkout HEAD~1                          # Rollback code to previous commit  
+docker-compose up -d                         # Start with previous version
+
+# 2. Verify rollback success  
+curl https://catbench.com/api/health/        # Should return {"status": "healthy"}
+docker-compose ps                            # All services should show "Up"
+```
+
+### Targeted Rollback Procedures
+
+#### Code Rollback (Git-based)
+**Model Hint: Claude Haiku** ✨ *Standard git operations with clear outcomes*
+
+```bash
+# Check recent commits
+git log --oneline -5                         # Show last 5 commits
+
+# Rollback to specific commit
+git checkout [commit-hash]                   # Rollback to specific commit
+# OR
+git reset --hard HEAD~1                     # Rollback 1 commit (permanent)
+# OR  
+git revert HEAD                              # Create new commit that undoes last change
+
+# Redeploy after rollback
+docker-compose down && docker-compose up -d --build
+```
+
+#### Frontend Rollback
+```bash
+# If frontend build is broken
+cd frontend
+git checkout HEAD~1 -- package.json         # Rollback package.json only
+git checkout HEAD~1 -- src/                 # Rollback source code only
+npm install && npm run build                # Rebuild
+cp -r dist/* ../caddy/site/                 # Redeploy
+```
+
+#### Backend Rollback  
+```bash
+# Database migration rollback
+cd backend && source venv/bin/activate
+python manage.py migrate [app_name] [migration_number]  # Rollback to specific migration
+# OR
+python manage.py migrate [app_name] zero    # Rollback all migrations for app
+
+# Code rollback
+git checkout HEAD~1 -- backend/             # Rollback backend code only
+docker-compose restart backend              # Restart with previous code
+```
+
+#### Configuration Rollback
+```bash
+# Docker Compose rollback
+git checkout HEAD~1 -- compose/docker-compose.*.yml
+docker-compose down && docker-compose up -d
+
+# Environment variables rollback  
+git checkout HEAD~1 -- compose/.env
+docker-compose restart [affected-services]
+```
+
+### Database Recovery Procedures
+
+#### SQLite Database Recovery
+**Model Hint: Claude Sonnet 4** 🧠 *Database recovery requires careful data handling and verification*
+```bash
+# Create backup before any changes (always do this first)
+cd backend && cp db/inquirycircle.db db/inquirycircle.db.backup.$(date +%Y%m%d_%H%M%S)
+
+# Restore from backup
+cp db/inquirycircle.db.backup.[timestamp] db/inquirycircle.db
+docker-compose restart backend
+
+# Export/import data for recovery
+python manage.py dumpdata > backup_$(date +%Y%m%d_%H%M%S).json   # Create export
+python manage.py flush                                            # Clear database  
+python manage.py migrate                                          # Recreate tables
+python manage.py loaddata backup_[timestamp].json               # Restore data
+```
+
+#### Database Corruption Recovery
+```bash
+# Check database integrity
+cd backend && python manage.py shell -c "
+from django.db import connection
+cursor = connection.cursor()  
+cursor.execute('PRAGMA integrity_check;')
+print(cursor.fetchall())
+"
+
+# If corruption detected:
+mv db/inquirycircle.db db/corrupted_$(date +%Y%m%d_%H%M%S).db    # Preserve corrupted file
+python manage.py migrate                                          # Create fresh database
+# Restore from latest backup or rebuild from scratch
+```
+
+### Container Recovery Procedures
+
+#### Individual Container Recovery
+**Model Hint: Claude Haiku** ✨ *Standard container operations*
+```bash
+# Restart single container
+docker-compose restart [service-name]       # Soft restart
+docker-compose stop [service-name] && docker-compose up -d [service-name]  # Hard restart
+
+# Rebuild single container
+docker-compose stop [service-name]
+docker-compose rm [service-name]            # Remove container
+docker-compose up -d --build [service-name] # Rebuild and start
+
+# Reset container to clean state
+docker-compose down [service-name]
+docker rmi inquirycircle_[service-name]     # Remove image
+docker-compose up -d --build [service-name] # Force rebuild
+```
+
+#### Full Stack Recovery
+```bash
+# Nuclear option: rebuild everything
+docker-compose down -v                      # Stop and remove volumes
+docker system prune -a -f                   # Remove all unused containers/images
+docker-compose up -d --build               # Rebuild entire stack from scratch
+```
+
+### Recovery Verification Checklist
+**Model Hint: Claude Haiku** ✨ *Standard verification commands*
+
+After any rollback/recovery:
+- [ ] Health check returns 200: `curl https://catbench.com/api/health/`
+- [ ] All containers running: `docker-compose ps` (all "Up")  
+- [ ] No error logs: `docker-compose logs --tail=20`
+- [ ] Authentication works: Test with valid key
+- [ ] Frontend loads correctly: Visit https://catbench.com
+- [ ] Database accessible: Test API endpoints
+- [ ] SSL/TLS working: Check HTTPS certificate
+
+### Recovery Time Objectives (RTO)
+- **Emergency rollback**: < 2 minutes (service restoration)
+- **Targeted rollback**: < 5 minutes (specific component)  
+- **Database recovery**: < 10 minutes (from backup)
+- **Full rebuild**: < 15 minutes (nuclear option)
+Monitoring
+Health
+
+
+curl http://localhost:8080/api/health/
+docker-compose ps
+docker-compose logs -f [service]
+docker stats
+Security
+
+Watch for failed auth attempts
+
+Monitor cert expiry warnings
+
+Check container restart frequency
+
+Performance Tips
+Frontend: bundle splitting, lazy loading
+
+Backend: query optimization, DB indexing
+
+Caddy: caching headers, compression
+
+Jitsi: external service (no hosting overhead)
+
+---
+
+## STATUS.md Integration Reference
+
+This operations guide provides **stable procedures**. For **current project state**, always check STATUS.md for:
+
+### Current Status Indicators
+- **Project phase/version** → Determines which procedures are active
+- **Last successful deployment** → Baseline for rollback decisions  
+- **Known issues** → Current problems affecting operations
+- **Test credentials** → Authentication keys for testing
+- **Recent changes** → What was modified since last stable state
+
+### Daily Workflow Integration
+**AI Session Start**: Read this guide + latest STATUS.md section  
+**During Work**: Update STATUS.md with progress, issues, solutions
+**Session End**: Update STATUS.md with current state, next steps
+
+### STATUS.md Checkpoint Pattern
+When making significant changes:
+1. **Before**: Document current stable state in STATUS.md
+2. **During**: Log each step and its outcome  
+3. **After**: Update STATUS.md with new stable state or rollback
+
+---
+
+**Related Documentation**:  
+[project-spec](./project-spec.md) | [infrastructure](./infrastructure.md) | [STATUS](./STATUS.md) | [status-template](./status-template.md)
+
+**Document Version**: v2.1.0 | **Last Updated**: 9/12/2025 | **Status**: ✅ Production Ready
+---
+
+[0;32m✅[0m Loading operations guide 2 (operation directives)...
+<!-- InquiryCircle2 – OperationsGuide2 – Stage2 – 10/21/2025 at 12:00 PM ET -->
+
+# Operations Guide 2.0 (Streamlined)
+
+## Purpose
+Define *how* to build, test, deploy, and operate InquiryCircle using **Operation Directives** (function-based commands). This streamlined guide reduces repetitive command sequences into callable operations while maintaining all critical guardrails and procedures.
+
+---
+
+## Project Information
+
+### Environment Shortcuts
+Shorthand constants for environment operations:
+- `wsl:` od_switch_wsl() - WSL development environment
+- `vps:` od_switch_vps() - VPS production environment
+- `doc:` od_switch_doc() - Documentation environment
+
+### Paths
+**WSL Development Environment:**
+- `project_root_wsl:` /home/scott/inquirycircle
+- `frontend_path:` project_root_wsl/frontend
+- `backend_path:` project_root_wsl/backend
+- `compose_path:` project_root_wsl/compose
+
+
+**VPS Production Environment:**
+- `project_root_vps:` /srv/inquirycircle
+
+**Documentation Environment:**
+- `docs_root:` /mnt/c/Users/scott/Documents/AIProjects/Markdown/docs-websystems/projects/inquirycircle
+- `translation_path:` docs_root/SideMatters/Translation
+- 
+### Configuration Files
+- `compose_dev:` compose_path/docker-compose.dev.yml
+- `compose_prod:` compose_path/docker-compose.prod.yml
+- `env_file_dev:` compose_path/.env
+- `package_json:` frontend_path/package.json
+- `requirements_file:` backend_path/requirements.txt
+
+### URLs & Endpoints
+- `api_health_local_https:` https://localhost/api/health/
+- `api_health_local_http:` http://localhost/api/health/
+- `api_health_prod:` https://catbench.com/api/health/
+- `domain_prod:` catbench.com
+- `subdomain_prod:` icircle.catbench.com
+
+### Documentation Files
+- `doc_project_spec:` docs_root/Documentation/project-spec.md
+- `doc_status:` docs_root/Documentation/STATUS.md
+- `doc_operations:` docs_root/Documentation/operations-guide.md
+- `doc_operations2:` docs_root/Documentation/operations-guide2.md
+- `doc_infrastructure:` docs_root/Documentation/infrastructure.md
+- `doc_changelog:` docs_root/Documentation/CHANGELOG.md
+
+### Container Names
+- `container_frontend:` ic-frontend
+- `container_backend:` ic-backend
+- `container_caddy:` ic-caddy
+
+---
+
+## Development Guardrails
+
+### Overview
+- Guardrails are meta-rules that govern HOW all operations are executed
+- **Default behavior:** ALL guardrails apply to every operation
+- Operations can specify which guardrails to apply using params
+- **Positive selection:** `operation(params, guard1, guard2)` - apply ONLY specified guardrails
+- **Negative selection:** `operation(params, -guard3)` - apply all EXCEPT specified guardrails
+
+### Guardrail Definitions
+
+#### bash_only
+**Name:** `bash_only`
+**Rule:** Operate only in bash on WSL and VPS (no PowerShell)
+**Applies to:** All operations
+
+#### incremental
+**Name:** `incremental`
+**Rule:** Proceed incrementally - verify each step before moving forward
+**Applies to:** All operations, especially deployment and rollback
+
+#### rollback_ready
+**Name:** `rollback_ready`
+**Rule:** Be rollback-ready at all times (retain prior configs and builds)
+**Applies to:** All deployment and database operations
+
+#### evidence
+**Name:** `evidence`
+**Rule:** Capture evidence - logs, health checks, curl outputs, screenshots
+**Applies to:** All operations
+
+#### no_auto_complete
+**Name:** `no_auto_complete`
+**Rule:** NEVER mark stages as complete in STATUS.md - wait for user confirmation
+**Applies to:** All operations that complete tasks
+
+#### frontend_deploy_rule
+**Name:** `frontend_deploy_rule`
+**Rule:** Frontend is containerized. Vue changes require:
+1. Build (`npm run build`)
+2. Container rebuild (`docker-compose up -d --build frontend`)
+3. Browser hard refresh (Ctrl+Shift+R)
+**Applies to:** All frontend operations
+
+#### no_heredocs
+**Name:** `no_heredocs`
+**Rule:** Use `echo "..." > filename` for first line, `echo "..." >> filename` for subsequent lines
+**Applies to:** File creation operations
+
+#### ssh_only
+**Name:** `ssh_only`
+**Rule:** All VPS actions done by operator over SSH (AI suggests, doesn't execute)
+**Applies to:** Production operations
+
+#### test_keys
+**Name:** `test_keys`
+**Rule:** Use test keys in development; production keys in `/etc/inquirycircle/env`
+**Applies to:** Authentication operations
+
+### Usage Examples
+
+```bash
+# Default: All guardrails apply
+deploy_frontend()
+
+# Apply only specific guardrails
+deploy_frontend(incremental, evidence)
+
+# Apply all EXCEPT specific guardrails
+deploy_frontend(-no_auto_complete)
+
+# Combine with operation params
+envswitch(wsl, incremental, evidence)
+rollback_git(2, -rollback_ready)              # Rollback 2 commits, skip rollback prep
+```
+
+### When to Override Guardrails
+
+**Use positive selection (specify which to apply):**
+- Quick testing/debugging where you want minimal safety checks
+- Automated scripts where certain guardrails don't apply
+
+**Use negative selection (exclude specific guardrails):**
+- Emergency situations where speed matters more than evidence capture
+- Specific operations where one guardrail doesn't make sense
+
+**Important:** Overriding guardrails should be intentional and rare. The defaults exist for safety.
+
+---
+
+## Operation Directives (ODs)
+
+### Overview
+- Operation Directives are workflow-based functions that accomplish complete tasks
+- Organized by 10 functional operational categories
+- Use Name(params) pattern, case insensitive
+- Guardrails must always be adhered to when executing ODs
+- Can reference defined paths/variables
+
+---
+
+## 1. Session Management
+
+#### session_start()
+**Description:** Start new AI work session
+**Usage:** Beginning of every AI session
+**Commands:**
+```bash
+/home/scott/inquirycircle/context-loader.sh  # Load all docs
+cd project_root_wsl
+git status                                   # Check current state
+docker-compose ps                            # Check containers
+curl api_health_local_https -k              # Health check
+```
+
+#### session_continue()
+**Description:** Continue existing session
+**Usage:** When resuming work
+**Commands:**
+```bash
+cd project_root_wsl
+git status
+docker-compose ps
+curl api_health_local_https -k
+```
+
+#### session_end()
+**Description:** End work session safely
+**Usage:** Before closing session
+**Commands:**
+```bash
+cd project_root_wsl
+git status                                   # Check for uncommitted changes
+docker-compose ps                            # Verify containers running
+curl api_health_local_https -k              # Final health check
+# Remind user to update STATUS.md if needed
+```
+
+---
+
+## 2. Environment Management
+
+#### envswitch(env)
+**Description:** Switch between project environments
+**Params:** env - Environment shorthand (wsl, vps, or doc)
+**Usage:** Change working environment
+**Commands:**
+```bash
+# envswitch(wsl) - executes od_switch_wsl()
+cd project_root_wsl
+pwd                                          # Confirm location matches project_root_wsl
+docker-compose ps                            # Show dev containers
+
+# envswitch(vps) - executes od_switch_vps() (run after SSH)
+ssh user@domain_prod
+cd project_root_vps
+pwd                                          # Confirm location matches project_root_vps
+docker-compose ps                            # Show prod containers
+
+# envswitch(doc) - executes od_switch_doc()
+cd docs_root
+pwd                                          # Confirm location matches docs_root
+git status                                   # Show doc repo status
+```
+
+#### envverify(env)
+**Description:** Verify environment is properly configured
+**Params:** env - Environment shorthand (wsl, vps, or doc)
+**Usage:** Check environment health and prerequisites
+**Commands:**
+```bash
+# envverify(wsl) - Verify WSL development environment
+cd project_root_wsl
+node --version                               # Check Node.js
+python --version                             # Check Python
+docker --version                             # Check Docker
+docker-compose --version                     # Check Compose
+curl api_health_local_https -k              # Health check
+
+# envverify(vps) - Verify VPS production environment (run on VPS)
+cd project_root_vps
+curl api_health_prod                         # API health
+docker-compose ps                            # Containers running
+df -h                                        # Disk space
+free -h                                      # Memory
+docker --version                             # Docker version
+
+# envverify(doc) - Verify documentation environment
+cd docs_root
+git remote -v                                # Confirm repo: docs-websystems
+git status                                   # Check for uncommitted changes
+ls Documentation/ | head -5                  # List doc files
+```
+
+---
+
+## 3. Container Management
+
+#### container_start_all()
+**Description:** Start full development stack
+**Usage:** Beginning of development work
+**Commands:**
+```bash
+cd compose_path
+docker-compose -f compose_dev up -d
+sleep 5                                      # Wait for startup
+docker-compose ps                            # Verify all running
+curl api_health_local_https -k              # Health check
+```
+
+#### container_stop_all()
+**Description:** Stop all containers
+**Usage:** End of work, system maintenance
+**Commands:**
+```bash
+cd compose_path
+docker-compose -f compose_dev down
+```
+
+#### container_restart(service)
+**Description:** Restart specific container
+**Params:** service - frontend, backend, or caddy
+**Usage:** Quick restart after config change
+**Commands:**
+```bash
+cd compose_path
+docker-compose -f compose_dev restart service
+sleep 3
+docker-compose ps | grep service
+docker-compose logs --tail=10 service
+```
+
+#### container_rebuild(service)
+**Description:** Full rebuild of container
+**Params:** service - Container to rebuild
+**Usage:** After Dockerfile or major code changes
+**Commands:**
+```bash
+cd compose_path
+docker-compose -f compose_dev stop service
+docker-compose -f compose_dev rm -f service
+docker-compose -f compose_dev up -d --build service
+sleep 5
+docker-compose ps | grep service
+```
+
+#### container_rebuild_all()
+**Description:** Rebuild entire stack
+**Usage:** Major changes, troubleshooting
+**Commands:**
+```bash
+cd compose_path
+docker-compose -f compose_dev down
+docker-compose -f compose_dev up -d --build
+sleep 10
+docker-compose ps
+curl api_health_local_https -k
+```
+
+#### container_clean()
+**Description:** Clean up Docker resources
+**Usage:** Free disk space, clear old images
+**Commands:**
+```bash
+docker system df                             # Show usage before
+docker system prune -a -f
+docker volume prune -f
+docker system df                             # Show usage after
+```
+
+#### container_status()
+**Description:** Show detailed container status
+**Usage:** Check what's running
+**Commands:**
+```bash
+cd compose_path
+docker-compose ps
+docker stats --no-stream
+```
+
+#### container_logs(service, lines)
+**Description:** View container logs
+**Params:** service - Container name, lines - Number of lines (default 50)
+**Usage:** Troubleshooting, monitoring
+**Commands:**
+```bash
+cd compose_path
+docker-compose logs --tail=lines service
+```
+
+---
+
+## 4. Code Development
+
+#### dev_frontend_setup()
+**Description:** Set up frontend for first time
+**Usage:** Initial project setup
+**Commands:**
+```bash
+cd frontend_path
+npm install
+npm run build
+```
+
+#### dev_frontend_start()
+**Description:** Start frontend dev server with hot reload
+**Usage:** Frontend development with live updates
+**Commands:**
+```bash
+cd frontend_path
+npm run dev
+# Opens at http://localhost:5173
+```
+
+#### dev_backend_setup()
+**Description:** Set up backend for first time
+**Usage:** Initial project setup
+**Commands:**
+```bash
+cd backend_path
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements_file
+python manage.py migrate
+```
+
+#### dev_backend_start()
+**Description:** Start Django dev server
+**Usage:** Backend development and testing
+**Commands:**
+```bash
+cd backend_path
+source venv/bin/activate
+python manage.py runserver
+# Runs at http://localhost:8000
+```
+
+#### dev_install_deps()
+**Description:** Install all dependencies (frontend + backend)
+**Usage:** After pulling new code
+**Commands:**
+```bash
+cd frontend_path && npm install
+cd backend_path && source venv/bin/activate && pip install -r requirements_file
+```
+
+---
+
+## 5. Testing & Verification
+
+#### test_health_all()
+**Description:** Complete health check (local + prod)
+**Usage:** Verify entire system
+**Commands:**
+```bash
+echo "=== Local Health ==="
+curl api_health_local_https -k && echo " ✅ Local OK" || echo " ❌ Local Failed"
+echo "=== Production Health ==="
+curl api_health_prod && echo " ✅ Prod OK" || echo " ❌ Prod Failed"
+echo "=== Containers ==="
+cd compose_path && docker-compose ps
+```
+
+#### test_health_local()
+**Description:** Local development health only
+**Usage:** Quick dev environment check
+**Commands:**
+```bash
+curl api_health_local_https -k
+curl api_health_local_http
+cd compose_path && docker-compose ps | grep -v Exit
+```
+
+#### test_health_prod()
+**Description:** Production health only
+**Usage:** Verify VPS deployment
+**Commands:**
+```bash
+curl api_health_prod
+curl https://subdomain_prod/api/health/
+curl -I https://domain_prod | grep "HTTP"
+```
+
+#### test_health_db()
+**Description:** Database connectivity check
+**Usage:** Verify database is accessible
+**Commands:**
+```bash
+cd backend_path
+python manage.py shell -c "from django.db import connection; cursor = connection.cursor(); cursor.execute('SELECT 1'); print('DB OK')"
+```
+
+#### test_backend()
+**Description:** Run backend test suite
+**Usage:** Verify backend functionality
+**Commands:**
+```bash
+cd backend_path
+source venv/bin/activate
+python manage.py test
+```
+
+#### test_verify_deployment(component)
+**Description:** Verify component deployed correctly
+**Params:** component - Component name to check
+**Usage:** Confirm deployment success
+**Commands:**
+```bash
+cd compose_path
+docker-compose ps | grep component
+docker-compose logs --tail=20 component | grep -i error || echo "No errors"
+```
+
+---
+
+## 6. Deployment
+
+#### deploy_frontend()
+**Description:** Complete frontend deployment workflow
+**Usage:** Deploy any Vue component changes
+**Commands:**
+```bash
+# Pre-check
+cd project_root_wsl && git status
+curl api_health_local_https -k
+
+# Build and deploy
+cd frontend_path && npm run build
+cd compose_path
+docker-compose -f compose_dev up -d --build frontend
+sleep 5
+
+# Verify
+docker exec container_frontend ls -la /usr/share/nginx/html/assets/ | head -5
+docker-compose ps | grep frontend
+curl api_health_local_https -k
+
+# User action required: Hard refresh browser (Ctrl+Shift+R)
+```
+
+#### deploy_backend()
+**Description:** Complete backend deployment workflow
+**Usage:** Deploy backend code changes
+**Commands:**
+```bash
+# Pre-check
+cd project_root_wsl && git status
+curl api_health_local_https -k
+
+# Deploy
+cd backend_path
+python manage.py migrate                     # Run any new migrations
+cd compose_path
+docker-compose -f compose_dev restart backend
+sleep 5
+
+# Verify
+docker-compose ps | grep backend
+docker-compose logs --tail=20 backend
+curl api_health_local_https -k
+```
+
+#### deploy_backend_migrations()
+**Description:** Deploy backend with new migrations
+**Usage:** After model changes
+**Commands:**
+```bash
+# Create migrations
+cd backend_path
+python manage.py makemigrations
+
+# Backup database first
+cp db/inquirycircle.db db/inquirycircle.db.backup.$(date +%Y%m%d_%H%M%S)
+
+# Apply migrations
+python manage.py migrate
+
+# Restart backend
+cd compose_path
+docker-compose restart backend
+sleep 3
+
+# Verify
+curl api_health_local_https -k
+```
+
+#### deploy_prod()
+**Description:** Full production deployment (run on VPS)
+**Usage:** Deploy to production server
+**Commands:**
+```bash
+# Pre-check
+cd project_root_vps
+git status
+curl api_health_prod
+
+# Deploy
+git pull
+docker-compose down
+docker-compose up -d --build
+
+# Post-check
+sleep 10
+docker-compose ps
+curl api_health_prod
+docker-compose logs --tail=20 caddy
+docker-compose logs --tail=20 backend
+```
+
+#### deploy_check_pre()
+**Description:** Pre-deployment verification checklist
+**Usage:** Before any deployment
+**Commands:**
+```bash
+echo "=== Git Status ==="
+git status
+echo "=== Local Health ==="
+curl api_health_local_https -k
+echo "=== Container Status ==="
+docker-compose ps
+echo "=== Uncommitted Changes ==="
+git diff --stat
+```
+
+#### deploy_check_post()
+**Description:** Post-deployment verification checklist
+**Usage:** After deployment
+**Commands:**
+```bash
+echo "=== Production Health ==="
+curl api_health_prod
+echo "=== Container Logs (Caddy) ==="
+docker-compose logs --tail=20 caddy | grep -i error || echo "No errors"
+echo "=== Container Logs (Backend) ==="
+docker-compose logs --tail=20 backend | grep -i error || echo "No errors"
+echo "=== Container Status ==="
+docker-compose ps
+```
+
+---
+
+## 7. Rollback & Recovery
+
+#### rollback_emergency()
+**Description:** Emergency production rollback (run on VPS)
+**Usage:** Production is down, immediate recovery needed
+**Commands:**
+```bash
+cd project_root_vps
+docker-compose down
+git log --oneline -3                         # Show recent commits
+git checkout HEAD~1                          # Rollback 1 commit
+docker-compose up -d
+sleep 10
+curl api_health_prod && echo "✅ Rollback successful" || echo "❌ Still failing"
+docker-compose ps
+```
+
+#### rollback_frontend()
+**Description:** Rollback frontend to previous version
+**Usage:** Frontend deployment failed
+**Commands:**
+```bash
+cd frontend_path
+git checkout HEAD~1 -- src/
+git checkout HEAD~1 -- package_json
+npm install
+npm run build
+cd compose_path
+docker-compose -f compose_dev up -d --build frontend
+sleep 5
+docker-compose ps | grep frontend
+curl api_health_local_https -k
+```
+
+#### rollback_backend()
+**Description:** Rollback backend to previous version
+**Usage:** Backend deployment failed
+**Commands:**
+```bash
+cd backend_path
+git checkout HEAD~1 -- backend/
+cd compose_path
+docker-compose restart backend
+sleep 3
+docker-compose logs --tail=20 backend
+curl api_health_local_https -k
+```
+
+#### rollback_git(n)
+**Description:** Rollback entire codebase by n commits
+**Params:** n - Number of commits to rollback
+**Usage:** Major issues requiring full rollback
+**Commands:**
+```bash
+cd project_root_wsl
+git log --oneline -5
+git checkout HEAD~n
+docker-compose down
+docker-compose up -d --build
+sleep 10
+docker-compose ps
+curl api_health_local_https -k
+```
+
+#### recover_container(service)
+**Description:** Recover failed container
+**Params:** service - Container name
+**Usage:** Container crashed or won't start
+**Commands:**
+```bash
+cd compose_path
+echo "=== Current Status ==="
+docker-compose ps | grep service
+echo "=== Recent Logs ==="
+docker-compose logs --tail=50 service
+echo "=== Attempting Recovery ==="
+docker-compose stop service
+docker-compose rm -f service
+docker-compose up -d --build service
+sleep 5
+docker-compose ps | grep service
+```
+
+---
+
+## 8. Database Operations
+
+#### db_migrate()
+**Description:** Run database migrations
+**Usage:** Apply schema changes
+**Commands:**
+```bash
+cd backend_path
+python manage.py migrate
+python manage.py showmigrations                # Verify applied
+```
+
+#### db_create_migrations()
+**Description:** Create new migrations after model changes
+**Usage:** After editing Django models
+**Commands:**
+```bash
+cd backend_path
+python manage.py makemigrations
+git diff migrations/                           # Review generated files
+```
+
+#### db_backup()
+**Description:** Create database backup
+**Usage:** Before risky operations
+**Commands:**
+```bash
+cd backend_path
+cp db/inquirycircle.db db/inquirycircle.db.backup.$(date +%Y%m%d_%H%M%S)
+ls -lh db/*.backup.* | tail -5                # Show recent backups
+```
+
+#### db_restore(timestamp)
+**Description:** Restore database from backup
+**Params:** timestamp - Backup timestamp (YYYYMMDD_HHMMSS)
+**Usage:** Recover from database corruption
+**Commands:**
+```bash
+cd backend_path
+cp db/inquirycircle.db.backup.timestamp db/inquirycircle.db
+cd compose_path
+docker-compose restart backend
+sleep 3
+curl api_health_local_https -k
+```
+
+#### db_export()
+**Description:** Export database to JSON
+**Usage:** Portable backup, data migration
+**Commands:**
+```bash
+cd backend_path
+python manage.py dumpdata > db/backup_$(date +%Y%m%d_%H%M%S).json
+ls -lh db/*.json | tail -3
+```
+
+#### db_import(file)
+**Description:** Import database from JSON
+**Params:** file - JSON backup file path
+**Usage:** Restore from JSON backup
+**Commands:**
+```bash
+cd backend_path
+python manage.py loaddata file
+```
+
+#### db_check_integrity()
+**Description:** Verify database integrity
+**Usage:** Detect corruption
+**Commands:**
+```bash
+cd backend_path
+python manage.py shell -c "
+from django.db import connection
+cursor = connection.cursor()
+cursor.execute('PRAGMA integrity_check;')
+result = cursor.fetchall()
+print('OK' if result[0][0] == 'ok' else 'CORRUPTED')
+print(result)
+"
+```
+
+#### db_shell()
+**Description:** Open Django database shell
+**Usage:** Interactive database queries
+**Commands:**
+```bash
+cd backend_path
+python manage.py shell
+```
+
+---
+
+## 9. Documentation
+
+#### docs_update_status()
+**Description:** Update and commit STATUS.md
+**Usage:** Document progress/changes
+**Commands:**
+```bash
+cd docs_root
+git status
+# Edit STATUS.md (user action)
+git add doc_status
+git commit -m "Update STATUS.md: [brief description]"
+git push origin main
+```
+
+#### docs_commit(message)
+**Description:** Commit documentation changes
+**Params:** message - Commit message
+**Usage:** Save doc updates
+**Commands:**
+```bash
+cd docs_root
+git status
+git add Documentation/
+git commit -m "message"
+git push origin main
+```
+
+#### docs_view_recent()
+**Description:** View recent documentation changes
+**Usage:** Review what's been documented
+**Commands:**
+```bash
+cd docs_root
+git log --oneline -10 Documentation/
+```
+
+#### gcommit(env, message, tag)
+**Description:** Commit and push changes with optional tag
+**Params:**
+- env - Environment (wsl or doc)
+- message - Commit message describing changes
+- tag - Optional tag name (blank = no tag)
+**Usage:** Commit changes to either repository with optional version tag
+**Commands:**
+```bash
+# gcommit(wsl, "Stage 2.5.1: Add translation feature", "v2.5.1")
+# Switches to WSL project environment
+cd project_root_wsl
+git status
+git add .
+git commit -m "message
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+git push origin main
+
+# If tag parameter provided:
+git tag -a tag -m "Extracted from commit message"
+git push origin tag
+git tag -l | tail -3  # Show recent tags
+
+# gcommit(doc, "Update project-spec Phase 2 status", "")
+# Switches to docs environment
+cd docs_root
+git status
+git add Documentation/
+git commit -m "message"
+git push origin main
+# No tag created (tag parameter blank)
+```
+
+#### gtag(env, tag, message)
+**Description:** Create and push a tag without committing
+**Params:**
+- env - Environment (wsl or doc)
+- tag - Tag name (required)
+- message - Tag annotation message
+**Usage:** Tag an existing commit
+**Commands:**
+```bash
+# gtag(wsl, "v2.5.0-hotfix", "Critical bug fix")
+cd project_root_wsl
+git tag -a tag -m "message"
+git push origin tag
+git tag -l | tail -5  # Show recent tags
+
+# gtag(doc, "docs-v1.2.0", "Documentation update")
+cd docs_root
+git tag -a tag -m "message"
+git push origin tag
+```
+
+#### gverify(env)
+**Description:** Verify git push succeeded
+**Params:** env - Environment (wsl or doc)
+**Usage:** Check remote matches local after push
+**Commands:**
+```bash
+# gverify(wsl)
+cd project_root_wsl
+git status
+git log --oneline -3
+git ls-remote --tags origin | tail -5
+echo "✅ Verified: Local and remote in sync"
+
+# gverify(doc)
+cd docs_root
+git status
+git log --oneline -3
+```
+
+---
+
+## 10. Troubleshooting
+
+#### troubleshoot_502()
+**Description:** Diagnose and fix 502 Bad Gateway
+**Usage:** Backend not responding
+**Commands:**
+```bash
+echo "=== Checking Backend Container ==="
+cd compose_path
+docker-compose ps | grep backend
+echo "=== Backend Logs ==="
+docker-compose logs --tail=50 backend
+echo "=== Attempting Fix ==="
+docker-compose restart backend
+sleep 5
+curl api_health_local_https -k
+```
+
+#### troubleshoot_frontend_stale()
+**Description:** Fix stale frontend content
+**Usage:** Changes not appearing in browser
+**Commands:**
+```bash
+echo "=== Rebuilding Frontend ==="
+cd frontend_path && npm run build
+cd compose_path
+docker-compose -f compose_dev up -d --build frontend
+sleep 5
+echo "=== Checking Bundle ==="
+docker exec container_frontend ls -lht /usr/share/nginx/html/assets/ | head -3
+echo "=== User Action: Hard refresh browser (Ctrl+Shift+R) ==="
+```
+
+#### troubleshoot_container_wont_start(service)
+**Description:** Diagnose container startup failure
+**Params:** service - Container name
+**Usage:** Container shows Exit status
+**Commands:**
+```bash
+cd compose_path
+echo "=== Container Status ==="
+docker-compose ps | grep service
+echo "=== Full Logs ==="
+docker-compose logs service
+echo "=== Docker System ==="
+docker system df
+echo "=== Available Resources ==="
+free -h
+df -h
+```
+
+#### troubleshoot_db_locked()
+**Description:** Fix database locked error
+**Usage:** SQLite lock detected
+**Commands:**
+```bash
+cd compose_path
+echo "=== Checking Connections ==="
+docker-compose logs --tail=100 backend | grep -i "database"
+echo "=== Restarting Backend ==="
+docker-compose restart backend
+sleep 3
+curl api_health_local_https -k
+```
+
+#### troubleshoot_logs_all()
+**Description:** Dump all container logs for analysis
+**Usage:** Deep troubleshooting
+**Commands:**
+```bash
+cd compose_path
+echo "=== Frontend Logs ==="
+docker-compose logs --tail=30 frontend
+echo "=== Backend Logs ==="
+docker-compose logs --tail=30 backend
+echo "=== Caddy Logs ==="
+docker-compose logs --tail=30 caddy
+```
+
+#### troubleshoot_resources()
+**Description:** Check system resource usage
+**Usage:** Performance issues
+**Commands:**
+```bash
+echo "=== Docker Resources ==="
+docker stats --no-stream
+echo "=== Disk Usage ==="
+docker system df
+df -h
+echo "=== Memory ==="
+free -h
+```
+
+---
+
+## AI Assistant Instructions
+
+### Session Initialization
+**New Session:** Run `session_start()` to load documentation and verify system
+**Continuing Work:** Run `session_continue()` to check current state
+
+### Deployment Pattern
+1. Run `deploy_check_pre()`
+2. Apply one change at a time (use `deploy_frontend()` or `deploy_backend()`)
+3. Test each change with health checks
+4. Run `deploy_check_post()`
+5. Rollback if any check fails
+
+### Frontend Changes
+For ANY Vue component change:
+1. Run `deploy_frontend()`
+2. User performs hard refresh (Ctrl+Shift+R)
+3. Verify with health checks
+
+### Error Response
+1. Stop immediately
+2. Capture full error details
+3. Run appropriate troubleshooting operation
+4. Propose rollback if uncertain
+
+### Evidence Requirements
+Always provide evidence for:
+- Command outputs (especially curl)
+- Container status (docker-compose ps)
+- Log snippets
+- Before/after comparisons
+- Health check results
+
+---
+
+## Troubleshooting Quick Reference
+
+### Common Issues
+| Issue | Workflow Operation |
+|-------|-------------------|
+| 502 Bad Gateway | `troubleshoot_502()` |
+| Frontend stale content | `troubleshoot_frontend_stale()` |
+| Database locked | `troubleshoot_db_locked()` |
+| Container won't start | `troubleshoot_container_wont_start(service)` |
+| Production down | `rollback_emergency()` |
+| Any container issue | `troubleshoot_logs_all()` |
+| Performance problems | `troubleshoot_resources()` |
+
+---
+
+## Recovery Time Objectives (RTO)
+
+- **Emergency rollback**: < 2 minutes (`rollback_emergency()`)
+- **Targeted rollback**: < 5 minutes (`rollback_frontend()` or `rollback_backend()`)
+- **Database recovery**: < 10 minutes (`db_restore(timestamp)`)
+- **Full rebuild**: < 15 minutes (`container_clean()` + `container_rebuild_all()`)
+
+---
+
+## Quick Reference Card
+
+### Most Common Workflows
+```bash
+# Session Management
+session_start()                 # Start new work session
+session_continue()              # Continue existing session
+session_end()                   # End session safely
+
+# Environment Management
+envswitch(wsl)                  # Switch to WSL dev
+envswitch(vps)                  # Switch to VPS prod
+envswitch(doc)                  # Switch to docs
+envverify(wsl)                  # Verify WSL environment
+
+# Testing & Verification
+test_health_all()               # Check everything
+test_health_local()             # Check dev only
+test_health_prod()              # Check production only
+
+# Deployment
+deploy_frontend()               # Deploy Vue changes
+deploy_backend()                # Deploy Django changes
+deploy_backend_migrations()     # Deploy with migrations
+deploy_prod()                   # Deploy to production (VPS)
+
+# Container Management
+container_start_all()           # Start dev stack
+container_stop_all()            # Stop all containers
+container_restart(service)      # Restart one container
+container_rebuild(service)      # Rebuild one container
+
+# Troubleshooting
+troubleshoot_502()              # Fix 502 errors
+troubleshoot_frontend_stale()   # Fix stale content
+troubleshoot_logs_all()         # View all logs
+
+# Rollback & Recovery
+rollback_emergency()            # Production emergency
+rollback_frontend()             # Frontend only
+rollback_backend()              # Backend only
+recover_container(service)      # Recover failed container
+
+# Database
+db_backup()                     # Backup before changes
+db_migrate()                    # Apply migrations
+db_check_integrity()            # Check for corruption
+
+# Git Operations
+gcommit(wsl, "Stage 2.5.1: Feature", "v2.5.1")  # Commit + push + tag
+gcommit(doc, "Update docs", "")                 # Commit + push (no tag)
+gtag(wsl, "v2.5.1-hotfix", "Bug fix")           # Tag existing commit
+gverify(wsl)                                    # Verify push succeeded
+```
+
+---
+
+**Related Documentation:**
+[project-spec](./project-spec.md) | [operations-guide](./operations-guide.md) | [infrastructure](./infrastructure.md) | [STATUS](./STATUS.md)
+
+**Document Version:** v2.0.0 | **Last Updated:** 10/21/2025 | **Status:** 🚧 Draft - Under Review
+
+---
+
+[0;32m✅[0m Loading infrastructure documentation...
+# Infrastructure
+<!-- InquiryCircle2 – Infrastructure – Stage2 – 9/12/2025 at 9:15 AM ET -->
+
+# Infrastructure
+
+## Purpose
+Define the environments and system layout for InquiryCircle. This document captures *where* development and production take place — not constraints (ProjectSpec) or procedures (OperationsGuide).
+
+---
+
+## Environments
+
+### DEV-PC (Windows 10/11 + WSL Ubuntu 22.04)
+- Local development machine.  
+- Run Linux commands (bash, docker, git) inside WSL.  
+- Access URLs:  
+  - http://localhost:8080 → Caddy entrypoint  
+  - http://localhost:5173 → Frontend dev server  
+  - http://localhost:8000 → Backend dev server  
+
+### WSL Ubuntu (inside DEV-PC)
+- Dev/dry-run environment (Docker Engine + Compose).  
+- Code root: `/home/scott/inquirycircle`.  
+- IDE: VSCode with Remote WSL extension.  
+- Workflow: All development occurs inside Linux environment.
+
+### VPS (catbench.com, Ubuntu 22.04)
+- Production deployment target.  
+- Access: `ssh user@catbench.com`.  
+- Project root: `/srv/inquirycircle`.  
+- Static assets: `/srv/inquirycircle/caddy/site/dist`.  
+- Persistent data: `/var/lib/inquirycircle`.
+
+### DOCS-ENV (Documentation Management Environment)
+- **Platform**: Windows 10/11 native filesystem  
+- **Access Path**: `/mnt/c/Users/scott/Documents/AIProjects/Markdown/docs-websystems/projects/inquirycircle/`
+- **Purpose**: Cross-project documentation templates and AI context management
+- **Tools**: Windows file explorer, VNote, text editors, git for Windows
+- **Integration**: Accessible from WSL via mount, serves AI model context loading
+- **Repository**: Version controlled via GitHub at docs-websystems
+- **Workflow**: Edit docs in VNote, commit changes, AI loads context for model switching
+
+---
+
+## DNS
+- `@` and `*` → 72.60.26.118  
+- Active domains:  
+  - https://catbench.com → Caddy reverse proxy  
+  - https://icircle.catbench.com → InquiryCircle application (Stage 2 target)  
+- Reserved subdomains: `dev.icircle`, `icgeneric`, `jitsi.icircle` (future), `ssh`, `www`.
+
+---
+
+## Network Topology
+
+**Development (WSL)**
+Docker network: inquirycircle_network
+├── caddy (exposed: 8080:80)
+│ ├─ routes /api/* → backend:8000
+│ └─ routes /* → frontend:3000 or static
+├── frontend (internal: 3000)
+├── backend (internal: 8000)
+└── [future: postgres (internal: 5432)]
+
+markdown
+Copy code
+
+**Production (VPS)**
+Docker network: inquirycircle_network
+├── caddy (exposed: 80, 443)
+│ ├─ routes /api/* → backend:8000
+│ └─ routes /* → frontend:3000 or static
+├── frontend (internal: 3000)
+├── backend (internal: 8000)
+└── [future: postgres (internal: 5432)]
+
+yaml
+Copy code
+
+---
+
+## Directory Layout
+
+### WSL Development
+/home/scott/inquirycircle/
+├─ compose/ # Compose configs, .env files
+├─ caddy/ # Static site (dist/)
+├─ frontend/ # Vue 3 + Jitsi source
+├─ backend/ # Django REST API
+└─ Documentation/ # Markdown docs (Windows path)
+
+
+
+### VPS Production
+/srv/inquirycircle/ # Git repo
+├─ compose/ # docker-compose.prod.yml
+├─ caddy/ # Caddyfile + static assets
+├─ frontend/ # Vue source (if built on server)
+├─ backend/ # Django source
+└─ Documentation/
+
+/etc/inquirycircle/ # Production env secrets
+/var/lib/inquirycircle/ # Persistent runtime data
+
+
+---
+
+## Version Control
+- GitHub repos:  
+  - `scott009/InquiryCircle` → active Stage 2 repo.  
+ 
+- Branch strategy:  
+  - `main` → production-ready.  
+  - `develop` → integration branch.  
+  - `feature/*`, `hotfix/*` → scoped branches.  
+
+---
+
+## Security Boundaries
+- **Development**: services local-only, test keys used.  
+- **Production**: only Caddy exposed (80/443), TLS via Caddy, backend internal, secrets in `/etc/inquirycircle/env`.
+
+---
+
+## Monitoring Points
+- Container CPU/memory usage.  
+- Disk usage for volumes.  
+- API response times.  
+- Cert expiry warnings.  
+- Failed authentication attempts.
+
+---
+
+**Related Documentation**:  
+[operations-guide](./operations-guide.md) | [project-spec](./project-spec.md) | [README](./README.md) | [CHANGELOG](./CHANGELOG.md)
+
+**Document Version**: v2.1.0 | **Last Updated**: 9/12/2025 | **Status**: ✅ Current
+
+
+---
+
+[0;32m✅[0m Loading changelog...
+# Documentation Changelog
+
+## v2.1.1 - 2025-09-12
+
+### AI Model Optimization
+- **OperationsGuide2.md**: Added comprehensive AI model hints throughout all sections
+  - **Claude Haiku** ✨ hints for routine commands, verification tasks, and standard procedures  
+  - **Claude Sonnet 4** 🧠 hints for complex analysis, troubleshooting, deployment decisions, and error handling
+  - **Cost Optimization**: Clear guidance on when to use which model for maximum efficiency
+  - **Performance Optimization**: Matched task complexity to appropriate model capabilities
+
+### Model Hint Categories Added
+- **Command Reference**: Haiku for simple commands, Sonnet 4 for production deployment
+- **Procedure Checklists**: Haiku for setup, Sonnet 4 for integration testing  
+- **Troubleshooting**: Sonnet 4 for all error analysis and diagnosis
+- **AI Instructions**: Haiku for documentation, Sonnet 4 for deployment decisions
+- **Rollback Procedures**: Sonnet 4 for critical decisions, Haiku for standard git operations
+- **Recovery Verification**: Haiku for standard verification commands
+
+---
+
+## v2.1.0 - 2025-09-12
+
+### Major Enhancements (Claude Code Integration)
+- **OperationsGuide2.md**: Transformed into comprehensive, stable reference manual
+  - Added complete command reference with 50+ essential commands
+  - Expanded troubleshooting section with 20+ error patterns and diagnostics  
+  - Created detailed procedure checklists for all operations
+  - Added AI instruction blocks for deploy-as-commit pattern
+  - Enhanced rollback procedures with emergency protocols (<2min RTO)
+  - Added STATUS.md integration points for daily workflow
+  - Added cross-document navigation and version tracking
+
+### Improvements Made
+- **Command Reference**: Complete development, production, health check, and emergency commands
+- **Troubleshooting**: Network, application, container, development, and production-specific error patterns
+- **Procedures**: Step-by-step checklists for frontend, backend, and Docker operations
+- **AI Integration**: Specific instructions for AI-assisted deployment and evidence requirements
+- **Recovery**: Comprehensive rollback procedures with time objectives
+- **Navigation**: Cross-references and related document links
+
+### Design Philosophy
+- **Stability Focus**: OperationsGuide2.md now serves as immutable reference
+- **Daily Workflow**: STATUS.md provides current state, this guide provides procedures
+- **AI-Friendly**: Structured for AI assistant integration with clear instruction blocks
+- **Evidence-Based**: Emphasis on capturing outputs and verification at each step
+
+---
+
+## v2.0.0 - 2025-09-12 (ChatGPT 5 Transformation)
+
+### Major Changes
+- **Content Reduction**: ~75% size reduction while preserving all essential information
+- **Clarity Enhancement**: Eliminated verbose explanations, focused on actionable content
+- **Structure Improvement**: Better hierarchy with consistent formatting
+- **Professional Polish**: Production-ready technical documentation
+
+### Files Transformed
+- `README.md` → `readme2.md`: 219 → 37 lines (project overview focus)
+- `ProjectSpec.md` → `ProjectSpec2.md`: 212 → 77 lines (architectural essence)  
+- `Infrastructure.md` → `Infrastructure2.md`: 317 → 123 lines (environment clarity)
+- `OperationsGuide.md` → `OperationsGuide2.md`: 592 → 199 lines (procedural focus)
+
+### Key Achievements
+- Separated immutable vs fluid project aspects
+- Eliminated redundancy across documents
+- Enhanced support for AI deployment commands
+- Maintained all critical technical specifications
+
+---
+
+## v1.0.0 - 2025-09-04 (Original Documentation)
+
+### Initial Documentation Set
+- **README.md**: Comprehensive project overview and setup guide
+- **ProjectSpec.md**: Detailed architecture, constraints, and governance
+- **Infrastructure.md**: System environments and network architecture  
+- **OperationsGuide.md**: Development workflow and deployment procedures
+- **STATUS.md**: Current progress tracking and task management
+
+### Foundation Elements
+- Complete technical specifications for InquiryCircle Stage 2
+- Docker containerization strategy
+- Vue 3 + Django + Caddy architecture
+- Key-based authentication model  
+- WSL development and VPS production environments
+- Git repository structure and workflow
+
+---
+
+## Future Versions
+
+### Planned Enhancements
+- Integration with Stage 3 documentation (PostgreSQL migration, self-hosted Jitsi)
+- Enhanced monitoring and observability procedures  
+- Automated documentation validation
+- Performance optimization guidelines
+- Security hardening procedures
+
+### Maintenance Notes
+- Major version bumps for significant structural changes
+- Minor version bumps for content additions/improvements
+- Patch versions for corrections and clarifications
+- Always maintain backward compatibility with existing procedures
+[0;34mℹ️[0m 📋 Context loading complete!
+[0;34mℹ️[0m 🤖 AI Session Ready - InquiryCircle project context loaded
+
+[0;34mℹ️[0m 💡 Key Information Loaded:
+   • Project architecture and constraints
+   • Current development status and priorities
+   • Complete operations procedures and commands
+   • Operation directives (streamlined commands)
+   • Infrastructure setup and environments
+   • Documentation change history
+
+[0;34mℹ️[0m 🚀 Ready to work on InquiryCircle!

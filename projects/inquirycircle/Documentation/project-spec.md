@@ -1,5 +1,5 @@
 
-<!-- InquiryCircle2 – ProjectSpec – Stage2 – 10/4/2025 at 10:30 PM ET -->
+<!-- InquiryCircle2 – ProjectSpec – Stage 2.5.0 Complete – 11/05/2025 at 8:30 AM ET -->
 
 # Project Specification
 
@@ -177,6 +177,10 @@ The InquiryCircle meeting interface demonstrates a hierarchical composition wher
 | rchoicePublic | rch1 | reaction2 | NF | NF |
 | rchoiceAnon | rch2 | reaction2 | NF | NF |
 | rchoiceSecret | rch3 | reaction2 | NF | NF |
+| English Text Display | engtxt1 | mainarea | NF | NF |
+| AI Translation Display | aitrans1 | mainarea | NF | NF |
+| Corrected Text Editor | corrected1 | mainarea | NF | NF |
+| Document Navigator | docnav1 | mainarea | NF | NF |
 
 **Core Display Areas**:
 - **topbar**: Navigation and user identity elements
@@ -560,6 +564,318 @@ backend/interactions/
 
 ---
 
+## Circle Types Architecture
+
+### Overview
+InquiryCircle supports multiple **circle types**, each providing a specialized user experience while sharing core infrastructure (authentication, video conferencing, data persistence). Circle types allow different collaborative workflows without duplicating common functionality.
+
+### Circle Type Concept
+A **circle type** determines:
+- Which route/UI is presented to users
+- What content is displayed and how users interact with it
+- What specialized features are available (beyond shared features like video, reactions, airtime)
+
+All circle types share:
+- Key-based authentication
+- Facilitator and participant roles
+- External Jitsi video integration
+- Core interaction features (reactions, airtime allocation when implemented)
+- SQLite persistence
+
+### Folder Structure
+
+**Backend:**
+```
+backend/
+├── circles/              # Core circle management (existing)
+│   ├── models.py         # Base Circle model with circle_type field
+│   ├── views.py          # Generic circle APIs
+│   ├── translation/      # Translation circle backend
+│   │   ├── __init__.py
+│   │   ├── models.py     # TranslationDocument, ParagraphCorrection
+│   │   ├── views.py      # Translation-specific APIs
+│   │   ├── serializers.py
+│   │   └── services.py   # JSON file handling
+│   ├── discussion/       # FUTURE: Standard discussion circles
+│   └── study/            # FUTURE: Study group circles
+└── media/
+    └── circle_content/   # Content files for all circle types
+        ├── translations/
+        │   └── rdg_en_v3.json
+        ├── readings/     # FUTURE: PDF/HTML readings
+        └── resources/    # FUTURE: Other resources
+```
+
+**Frontend:**
+```
+frontend/src/
+├── components/
+│   ├── circles/          # Circle-type specific components
+│   │   ├── translation/
+│   │   │   ├── EnglishTextDisplay.vue
+│   │   │   ├── AITranslationDisplay.vue
+│   │   │   ├── CorrectedTextEditor.vue
+│   │   │   └── DocumentNavigator.vue
+│   │   ├── discussion/   # FUTURE
+│   │   └── study/        # FUTURE
+│   ├── layout/           # Shared components (TopBar, etc.)
+│   └── reactions/        # Shared components (ReactionBar1, etc.)
+├── views/
+│   ├── TranslationCircle.vue      # Translation circle route
+│   ├── DiscussionCircle.vue       # FUTURE
+│   ├── StudyCircle.vue            # FUTURE
+│   ├── Meeting.vue                # Existing
+│   └── Welcome.vue                # Existing
+└── router/
+    └── index.js          # Dynamic circle type routing
+```
+
+### Naming Consistency
+- Backend and frontend use matching terminology: `circles/translation/` on both sides
+- No "types" folder - the structure is self-documenting
+- Flat view files in `views/` (consistent with existing architecture)
+- Components organized by circle type in `components/circles/<type>/`
+
+---
+
+## Translation Circle Specification
+
+### Purpose
+Enable collaborative translation review and correction of multilingual documents through video conferencing and synchronized text editing.
+
+### Use Case
+A **Translation Circle** facilitates human verification and correction of AI-generated translations:
+1. Facilitator selects a JSON file containing source text and AI translations
+2. Facilitator selects target language (e.g., Thai, Vietnamese, Korean)
+3. Participants (native speakers or fluent in target language) join circle
+4. Group reviews text together via video while editing translation collaboratively
+5. Corrections are saved to JSON file for future reference
+
+### JSON Document Structure
+
+**Source File**: `rdg_en_v3.json` (Recovery Dharma translation project)
+
+**Structure Example** (Chapter 9, Paragraph 1):
+```json
+{
+  "type": "paragraph",
+  "id": "p9-1",
+  "text": "Dharma is a Sanskrit word meaning...",
+  "thai_text": "ธรรมะเป็นคำภาษาสันสกฤตที่มีความหมายว่า...",
+  "vietnamese_text": "Pháp là một từ Phạn ngữ...",
+  "korean_text": "다르마(Dharma)는 '진리'...",
+  "corrected_thai_text": "ธรรมะเป็นคำภาษาสันสกฤตที่มีความหมายว่า..."
+}
+```
+
+**Enhancement**: Add `corrected_<language>_text` field for each language:
+- Initially copies `<language>_text` (AI-generated translation)
+- Modified by human reviewers during translation circle sessions
+- Persisted back to JSON or database
+
+### User Interface Design
+
+**4-Window Layout** (Translation-Specific Display Elements):
+1. **English Text Display** (`engtxt1`): Read-only display of `text` field
+2. **AI Translation Display** (`aitrans1`): Read-only display of `<language>_text` field
+3. **Corrected Text Editor** (`corrected1`): Textarea for `corrected_<language>_text` with Save button
+4. **Document Navigator** (`docnav1`): JSON-based document structure (chapters, sections, paragraphs)
+
+**Additional Elements** (shared display elements from core architecture):
+- `jitsiwin1`: Jitsi video window for collaborative video
+- `topbar1`: TopBar with navigation and user info
+- `reaction1`, `reaction2`: Reaction bars (optional, for engagement)
+- `statbar1`: Status displays
+
+**Integration with Display Component Architecture:**
+- Translation-specific elements (`engtxt1`, `aitrans1`, `corrected1`, `docnav1`) are composable display elements
+- Follow same patterns as existing elements (independent state, reusable across routes)
+- Listed in Element Mapping Table with "NF" status (not yet implemented)
+- Will be implemented as Vue components in `frontend/src/components/circles/translation/`
+- Specific layout composition to be defined during implementation (Phase 3-5)
+
+### Key Features
+
+**Content Management:**
+- JSON file serves as pure content container (no formatting, only structure)
+- Facilitator chooses document and target language
+- Navigation follows JSON hierarchy (sections → chapters → paragraphs)
+
+**Collaboration:**
+- All participants see same paragraph simultaneously
+- Independent editing (with conflict resolution in advanced phase)
+- Save button updates `corrected_<language>_text` field
+- Changes visible to all participants after save/reload
+
+**Simplified Controls:**
+- No complex facilitator controls required initially
+- Focus on content editing and video collaboration
+- Can leverage full IC feature set (airtime, reactions) when implemented
+
+### Translation Circle Development Roadmap
+
+### Implementation Status
+
+**Phase 1: Folder Structure & Stubs** ✅ **COMPLETE (10/26/2025)**
+- Backend stubs: `circles/translation/` (models, views, services, serializers, URLs)
+- Frontend stubs: `components/circles/translation/` (4 Vue components)
+- `TranslationCircle.vue` view created
+- README documentation added
+- **Status**: Foundation complete, no functionality yet
+
+**Phase 2: JSON Data Layer** ✅ **COMPLETE (10/27/2025)**
+- **Backend Implementation**:
+  - Models: `TranslationDocument`, `TranslationSession`, `ParagraphCorrection`
+  - Services: `JSONDocumentLoader` (JSON→DB), `JSONDocumentWriter` (DB→JSON)
+  - REST API: 7 endpoints for session and paragraph management
+  - Serializers: Full DRF serialization with validation
+  - URL routing: `/api/translation/*` endpoints registered
+  - Migrations: Applied and tested (translation.0001_initial)
+- **Storage Strategy**: Hybrid approach
+  - Active sessions: Fast editing in SQLite database
+  - Completed sessions: Permanent storage in JSON file with metadata
+  - Attribution: Tracks who edited, when, and approval status
+- **API Endpoints**:
+  - `POST /api/translation/sessions/start/` - Start session (load JSON into DB)
+  - `POST /api/translation/sessions/<id>/end/` - End session (save DB to JSON)
+  - `GET /api/translation/sessions/<id>/` - Get session details
+  - `GET /api/translation/sessions/<id>/paragraphs/` - List all paragraphs
+  - `GET /api/translation/paragraphs/<id>/` - Get single paragraph
+  - `PATCH /api/translation/paragraphs/<id>/update/` - Update correction
+  - `POST /api/translation/paragraphs/<id>/approve/` - Approve paragraph (facilitator)
+- **Testing Results**:
+  - ✅ 391 paragraphs loaded from `rdg_thai.json` in ~3 seconds
+  - ✅ Paragraph update and correction workflow validated
+  - ✅ Session save-back to JSON verified with metadata preserved
+  - ✅ End-to-end workflow tested successfully
+- **Git**: Committed as Stage 2.5.0, tagged `v2.5.0-translation-phase2`
+- **Status**: Backend complete and tested, ready for frontend implementation
+
+**Phase 3: Basic UI** ✅ **COMPLETE (10/28/2025)**
+- ✅ `EnglishTextDisplay.vue`: Source text rendering with paragraph navigation
+- ✅ `AITranslationDisplay.vue`: AI-generated translation display with language selection
+- ✅ `CorrectedTextEditor.vue`: Editable correction panel with auto-save functionality
+- ✅ `DocumentNavigator.vue`: Interactive document structure tree with chapter/section navigation
+- ✅ `TranslationCircle.vue`: All 4 components wired up with API integration
+- ✅ Real-time API calls to backend translation endpoints
+- ✅ Persistent correction storage via PATCH requests
+- ✅ Synchronized paragraph navigation across all panels
+- **Testing**: Navigate paragraphs, edit text, save, reload - all verified ✅
+
+**Phase 4: Circle Integration** ✅ **COMPLETE (10/28/2025)**
+- ✅ Added `circle_type` field to Circle model (discussion, translation, study)
+- ✅ Circle membership enforcement across all translation endpoints
+- ✅ `check_circle_access()` helper for consistent permission checking
+- ✅ Facilitator-only permission for paragraph approval
+- ✅ Authentication required on `/translation-circle/:circleId` route
+- ✅ Link corrections to user who made them (audit trail)
+- ✅ Smart routing based on circle type in Welcome view
+- **Testing**: Login with key, join translation circle, edit document - all verified ✅
+
+**Phase 5: Video Integration** ✅ **COMPLETE (11/02/2025)**
+- ✅ Integrated `VideoConference` component into TranslationCircle layout
+- ✅ Header + video (top) + 3-column editing area (bottom) layout
+- ✅ JaaS integration working with translation interface
+- ✅ Jitsi room name generation for translation circles
+- **Testing**: Multiple users in same translation circle, video + editing simultaneously - verified ✅
+
+**Phase 6: Facilitator Controls** ✅ **COMPLETE (11/03/2025)**
+- ✅ `FacilitatorControls.vue` component for document/language selection
+- ✅ Document dropdown with available translations
+- ✅ Language dropdown based on selected document's available languages
+- ✅ Role-based UI: Controls visible only to facilitators
+- ✅ Document and language change handlers
+- ✅ Dynamically show correct `<lang>_text` fields based on selection
+- ✅ Restructured header with role-based controls
+- ✅ Participant-only views (no facilitator controls visible)
+- **Testing**: Facilitator selects different languages and documents - verified ✅
+
+**Phase 7: Real-time Collaboration** 📋 **DEFERRED to Stage 2.6.0** (Pending Refactoring)
+
+**Note**: Stage 2.5.0 is complete. Next stage is 2.6.0 which involves architectural refactoring (see `refactor_25P6phase.md`) to properly support circle types, then Phase 7 implementation.
+
+**Goal**: Enable multiple users to collaborate on document editing with simple conflict prevention through paragraph-level locking.
+
+**Backend Tasks**:
+- WebSocket consumer for translation lock/unlock/update events
+- Broadcast paragraph lock/unlock events to all circle members
+- Track active locks per paragraph (user_id, timestamp)
+- Auto-release locks on timeout (configurable, default 60 seconds)
+- Store lock timeout setting in Circle model: `edit_lock_timeout_seconds`
+- Enforce one-edit-per-user: Check if user already holds a lock before granting new one
+
+**Frontend Tasks**:
+- WebSocket listener for lock events
+- UI states per paragraph:
+  - **Available**: `[Edit]` button enabled
+  - **I'm editing**: `[Save] [Cancel]` buttons + editable textarea
+  - **Locked by other**: `[Edit]` button disabled + "Joe is editing..." indicator
+  - **Just saved**: `[Edit]` button enabled + updated text
+- Disable all other `[Edit]` buttons when user is editing any paragraph
+- Show message if user tries to edit another paragraph: "Please save or cancel your edit"
+- Success feedback: "Saved!" (green message, fades out)
+- Error feedback: "Save failed" (red message)
+
+**Collaboration Strategy**:
+- **Paragraph independence**: Joe edits p9-1, Jill edits p9-2 simultaneously - no conflict
+- **Single lock per paragraph**: Only one user can edit a specific paragraph at a time
+- **Explicit controls**: `[Edit]` button locks, `[Save]` or `[Cancel]` unlocks
+- **Conflict resolution**: First-to-backend wins (server processes first request)
+- **Race conditions**: Second user gets error: "This paragraph is already being edited by Joe"
+- **Join mid-session**: Every `[Edit]` click checks backend for current lock state
+- **Disconnection handling**: Rely on timeout (60s default); future enhancement: detect disconnect
+
+**Facilitator Controls**:
+- Facilitator can force-unlock any paragraph (override stuck locks)
+- Useful when user's browser crashes or they walk away
+
+**WebSocket Events**:
+```
+PARAGRAPH_LOCK_ACQUIRED   # User clicks Edit, backend grants lock
+PARAGRAPH_LOCK_RELEASED   # User clicks Save/Cancel, or timeout expires
+PARAGRAPH_UPDATED         # Broadcast saved text to all users
+PARAGRAPH_LOCK_FAILED     # Lock request denied (already locked)
+```
+
+**Test**:
+- Two users editing different paragraphs simultaneously (should work)
+- Two users attempting to edit same paragraph (second should be blocked)
+- User disconnects while holding lock (should auto-release after timeout)
+- Facilitator force-unlock feature
+- User tries to edit multiple paragraphs (should be prevented with message)
+
+### Milestone Summary
+
+**Current Progress**: ✅ Phases 1-2 Complete (Backend foundation + API tested)
+**MVP (Minimum Viable Product)**: Phases 1-4 (editing + circle integration, no video)
+**Full Feature Set**: Phases 1-6 (includes video + facilitator controls)
+**Advanced Feature Set**: Phase 7 (real-time collaborative editing)
+
+### Scope Validation
+Translation circles meet Stage 2 criteria:
+- ✅ **Frontend**: Vue components using existing libraries
+- ✅ **Backend**: Django REST APIs for JSON handling and text storage
+- ✅ **No new infrastructure**: Uses existing Caddy/Docker/Compose setup
+- ✅ **No new authentication**: Leverages existing key-based access
+- ✅ **Progressive enhancement**: Builds on Stage 2.1-2.4 foundation
+- ✅ **No new services**: Uses existing Jitsi external service
+
+### Future Circle Types
+The circle types architecture enables future additions:
+- **Discussion Circles**: Standard video meetings with reactions and airtime (current default)
+- **Study Circles**: Synchronized reading with annotations and Q&A
+- **Workshop Circles**: Structured activities with facilitator-guided exercises
+- **Research Circles**: Collaborative analysis with document annotation
+
+Each new circle type follows same pattern:
+1. Create `circles/<type>/` backend module
+2. Create `components/circles/<type>/` frontend components
+3. Create `views/<TypeName>Circle.vue` route view
+4. Add circle type to base Circle model choices
+5. Implement type-specific features while sharing core infrastructure
+
+---
+
 ## Documentation Standards
 
 ### Version Strategy
@@ -592,7 +908,7 @@ Older versions must be marked explicitly, e.g.:
 
 ---
 
-**Related Documentation**:  
+**Related Documentation**:
 [operations-guide](./operations-guide.md) | [infrastructure](./infrastructure.md) | [README](./README.md) | [CHANGELOG](./CHANGELOG.md)
 
-**Document Version**: v2.4.0-foundation | **Last Updated**: 10/4/2025 | **Status**: ✅ Current
+**Document Version**: v2.5.0-circle-types | **Last Updated**: 10/26/2025 | **Status**: ✅ Current
