@@ -5,7 +5,7 @@
 
 [0;32m✅[0m Loading project specification...
 
-<!-- InquiryCircle2 – ProjectSpec – Stage2 – 10/26/2025 at 11:45 AM ET -->
+<!-- InquiryCircle2 – ProjectSpec – Stage 2.5.0 Complete – 11/05/2025 at 8:30 AM ET -->
 
 # Project Specification
 
@@ -757,39 +757,48 @@ A **Translation Circle** facilitates human verification and correction of AI-gen
 - **Git**: Committed as Stage 2.5.0, tagged `v2.5.0-translation-phase2`
 - **Status**: Backend complete and tested, ready for frontend implementation
 
-**Phase 3: Basic UI** 📋 **NEXT** (No Video, No Auth)
-- `EnglishTextDisplay.vue`: Display `text` field (read-only)
-- `AITranslationDisplay.vue`: Display `<language>_text` (read-only)
-- `CorrectedTextEditor.vue`: Editable textarea for `corrected_<language>_text` + Save button
-- `DocumentNavigator.vue`: Chapter/paragraph navigation from JSON structure
-- `TranslationCircle.vue`: Wire up all 4 components, fetch from API
-- **Test**: Navigate paragraphs, edit text, save, reload to verify persistence
+**Phase 3: Basic UI** ✅ **COMPLETE (10/28/2025)**
+- ✅ `EnglishTextDisplay.vue`: Source text rendering with paragraph navigation
+- ✅ `AITranslationDisplay.vue`: AI-generated translation display with language selection
+- ✅ `CorrectedTextEditor.vue`: Editable correction panel with auto-save functionality
+- ✅ `DocumentNavigator.vue`: Interactive document structure tree with chapter/section navigation
+- ✅ `TranslationCircle.vue`: All 4 components wired up with API integration
+- ✅ Real-time API calls to backend translation endpoints
+- ✅ Persistent correction storage via PATCH requests
+- ✅ Synchronized paragraph navigation across all panels
+- **Testing**: Navigate paragraphs, edit text, save, reload - all verified ✅
 
-**Phase 4: Circle Integration** (Auth & Membership)
-- Add `circle_type = 'translation'` support to base Circle model
-- Associate JSON file with circle
-- Enforce circle membership for API access
-- Link corrections to user who made them (audit trail)
-- Add route: `/circles/:circleId/translation` (requires auth)
-- Use existing auth/circle context in frontend
-- **Test**: Login with key, join translation circle, edit document
+**Phase 4: Circle Integration** ✅ **COMPLETE (10/28/2025)**
+- ✅ Added `circle_type` field to Circle model (discussion, translation, study)
+- ✅ Circle membership enforcement across all translation endpoints
+- ✅ `check_circle_access()` helper for consistent permission checking
+- ✅ Facilitator-only permission for paragraph approval
+- ✅ Authentication required on `/translation-circle/:circleId` route
+- ✅ Link corrections to user who made them (audit trail)
+- ✅ Smart routing based on circle type in Welcome view
+- **Testing**: Login with key, join translation circle, edit document - all verified ✅
 
-**Phase 5: Video Integration** (Jitsi Collaboration)
-- Add `JitsiWin1` component to `TranslationCircle.vue` layout
-- Adjust 4-window layout to accommodate video panel
-- Use existing Jitsi/JaaS integration
-- Generate Jitsi room name for translation circles
-- **Test**: Multiple users in same translation circle, video + editing simultaneously
+**Phase 5: Video Integration** ✅ **COMPLETE (11/02/2025)**
+- ✅ Integrated `VideoConference` component into TranslationCircle layout
+- ✅ Header + video (top) + 3-column editing area (bottom) layout
+- ✅ JaaS integration working with translation interface
+- ✅ Jitsi room name generation for translation circles
+- **Testing**: Multiple users in same translation circle, video + editing simultaneously - verified ✅
 
-**Phase 6: Facilitator Controls** (Document & Language Selection)
-- API endpoint: Upload/select JSON file for circle
-- Store circle settings: `target_language`, `source_file`
-- Facilitator UI: File upload/selection interface
-- Language selector (thai, vietnamese, korean, japanese, chinese, tibetan)
-- Dynamically show correct `<lang>_text` fields based on selection
-- **Test**: Facilitator selects different languages and documents
+**Phase 6: Facilitator Controls** ✅ **COMPLETE (11/03/2025)**
+- ✅ `FacilitatorControls.vue` component for document/language selection
+- ✅ Document dropdown with available translations
+- ✅ Language dropdown based on selected document's available languages
+- ✅ Role-based UI: Controls visible only to facilitators
+- ✅ Document and language change handlers
+- ✅ Dynamically show correct `<lang>_text` fields based on selection
+- ✅ Restructured header with role-based controls
+- ✅ Participant-only views (no facilitator controls visible)
+- **Testing**: Facilitator selects different languages and documents - verified ✅
 
-**Phase 7: Real-time Collaboration** (Paragraph-Level Locking)
+**Phase 7: Real-time Collaboration** 📋 **DEFERRED to Stage 2.6.0** (Pending Refactoring)
+
+**Note**: Stage 2.5.0 is complete. Next stage is 2.6.0 which involves architectural refactoring (see `refactor_25P6phase.md`) to properly support circle types, then Phase 7 implementation.
 
 **Goal**: Enable multiple users to collaborate on document editing with simple conflict prevention through paragraph-level locking.
 
@@ -912,14 +921,14 @@ Older versions must be marked explicitly, e.g.:
 ---
 
 [0;32m✅[0m Loading current status...
-<!-- InquiryCircle2 – STATUS – Stage2.5 – 10/26/2025 at 12:15 PM ET -->
+<!-- InquiryCircle2 – STATUS – Stage2.5 – 11/05/2025 at 8:30 AM ET -->
 
 # Project Status
 
 ## AI Session Context - Current State
-- **Stage**: Stage 2.5.0 - Circle Types Architecture & Translation Circle Foundation
-  - **Last Updated**: October 26, 2025 at 12:15 PM ET
-  - **System Health**: ✅ Phase 1 Complete - Folder Structure & Stubs Created
+- **Stage**: Stage 2.5.0 - Translation Circle Complete (All 6 Phases)
+  - **Last Updated**: November 5, 2025 at 8:30 AM ET
+  - **System Health**: ✅ Phase 6 Complete - Full Translation Circle with Facilitator Controls & Video Integration
 
 
 ### Test Credentials (Current)
@@ -1218,49 +1227,82 @@ there is also a create new circle button
 - ✅ 7-Phase Translation Circle roadmap documented
 - ✅ JSON document structure from rdg_en_v3.json specified
 
-### Translation Circle - Next Phases ()
-**Phase 2: JSON Data Layer** (✅  Complete - 10/27/2025)
-- Django models for TranslationDocument and ParagraphCorrection
-- JSON file loader service
-- REST API endpoints for loading and saving corrections
+### Translation Circle - Phases 2-6 (✅ All Complete)
 
-
-
+**Phase 2: JSON Data Layer** (✅ Complete - 10/27/2025)
+- ✅ Django models: TranslationDocument, TranslationSession, ParagraphCorrection
+- ✅ JSON file loader service (services.py)
+- ✅ REST API endpoints for loading and saving corrections
+- ✅ Full CRUD operations on paragraph corrections
+- ✅ Language-aware JSON field access
+- ✅ Session management with document and language tracking
 
 **Phase 3: Basic UI** (✅ Complete - 10/28/2025)
-- Implement the 4 Vue components with actual functionality
-- Wire up API calls
-- Test editing and persistence without auth
+- ✅ EnglishTextDisplay: Source text rendering with paragraph navigation
+- ✅ AITranslationDisplay: AI-generated translation display with language selection
+- ✅ CorrectedTextEditor: Editable correction panel with auto-save functionality
+- ✅ DocumentNavigator: Interactive document structure tree with chapter/section navigation
+- ✅ Real-time API calls to backend translation endpoints
+- ✅ Persistent correction storage via PATCH requests
+- ✅ Synchronized paragraph navigation across all panels
 
 **Phase 4: Circle Integration** (✅ Complete - 10/28/2025)
-- Add `circle_type = 'translation'` to Circle model
-- Enforce circle membership
-- Add authentication to translation route
+- ✅ Added `circle_type` field to Circle model (discussion, translation, study)
+- ✅ Implemented circle membership enforcement across all translation endpoints
+- ✅ Added check_circle_access() helper for consistent permission checking
+- ✅ Enforced facilitator-only permission for paragraph approval
+- ✅ Authentication required on /translation-circle/:circleId route
+- ✅ Smart routing based on circle type in Welcome view
 
 **Phase 5: Video Integration** (✅ Complete - 11/2/2025)
-- Add Jitsi to TranslationCircle layout
-- Test collaborative editing with video
+- ✅ Integrated VideoConference component into TranslationCircle layout
+- ✅ Header + video (top) + 3-column editing area (bottom) layout
+- ✅ Tested collaborative editing with video conferencing
+- ✅ JaaS integration working with translation interface
 
-**Phase 6: Facilitator Controls**
-- Document/language selection UI
-- File upload capability
+**Phase 6: Facilitator Controls** (✅ Complete - 11/3/2025)
+- ✅ FacilitatorControls component for document/language selection
+- ✅ Document dropdown with available translations
+- ✅ Language dropdown based on selected document's available languages
+- ✅ Role-based UI: Facilitator controls visible only to facilitators
+- ✅ Document and language change handlers
+- ✅ Restructured header with role-based controls
+- ✅ Participant-only views (no facilitator controls visible)
 
-**Phase 7: Real-time Collaboration** (ASpcification completed)
-See project-spce  
-- WebSocket-based live editing
-- Conflict resolution
+**Phase 7: Real-time Collaboration** (📋 Specification Completed - Deferred to Stage 2.6)
+- 📋 WebSocket-based live editing (specification exists in project-spec.md)
+- 📋 Conflict resolution
+- 📋 Multi-user editing indicators
+- 📋 Real-time paragraph locking
+
+---
+
+---
+
+## Next Stage: Stage 2.6.0 - Phase 6 Refactoring
+
+**Status**: Design Complete (refactor_25P6phase.md), Implementation Pending
+
+**Key Changes**:
+- Circle type as data, not routes
+- Standard routes: /facpanel, /facmeet/:id, /meeting/:id
+- TranslationDocument as system-wide library
+- Session-based meeting management
+- Smart defaults from last session
+
+See: `refactor_25P6phase.md` for complete refactoring specification.
 
 ---
 
 **Related Documentation**:
-[status-template](./status-template.md) | [operations-guide](./operations-guide.md) | [CHANGELOG](./CHANGELOG.md)
+[status-template](./status-template.md) | [operations-guide](./operations-guide.md) | [CHANGELOG](./CHANGELOG.md) | [refactor_25P6phase](../refactor_25P6phase.md)
 
-**Status Version**: v2.5.0-circle-types | **Last Updated**: 10/26/2025 | **Next Phase**: Stage 2.5.0 Phase 2 - JSON Data Layer
+**Status Version**: v2.5.0-complete | **Last Updated**: 11/05/2025 | **Next Phase**: Stage 2.6.0 - Phase 6 Refactoring (Architecture Redesign)
 ---
 
 [0;32m✅[0m Loading operations guide...
 
-<!-- InquiryCircle2 – OperationsGuide – Stage2 – 9/12/2025 at 8:45 AM ET -->
+<!-- InquiryCircle2 – OperationsGuide – Stage 2.5.0 – 11/05/2025 at 8:30 AM ET -->
 
 # Operations Guide
 
